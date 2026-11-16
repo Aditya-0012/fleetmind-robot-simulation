@@ -1,0 +1,133 @@
+@import '@fontsource/chakra-petch/500.css';
+@import '@fontsource/chakra-petch/600.css';
+@import '@fontsource/chakra-petch/700.css';
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+  body {
+    @apply bg-hull-950 font-sans text-ink-100 antialiased;
+    font-size: 15px;
+    line-height: 1.55;
+    background-image:
+      radial-gradient(1200px 600px at 85% -10%, rgba(76, 141, 255, 0.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(155, 123, 255, 0.08), transparent 60%),
+      linear-gradient(rgba(58, 76, 122, 0.10) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(58, 76, 122, 0.10) 1px, transparent 1px);
+    background-size: auto, auto, 40px 40px, 40px 40px;
+    background-attachment: fixed;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display text-ink-100;
+    letter-spacing: 0.01em;
+  }
+  :focus-visible {
+    outline: 2px solid #2bd9f2;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  ::selection {
+    background: rgba(43, 217, 242, 0.3);
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #26355c transparent;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply rounded-xl border border-hull-700/80 bg-hull-900/80 backdrop-blur-sm;
+  }
+  .panel-inset {
+    @apply rounded-lg border border-hull-700/60 bg-hull-950/60;
+  }
+  .btn {
+    @apply inline-flex select-none items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .btn-primary {
+    @apply btn bg-signal-cyan text-hull-950 hover:bg-[#5fe4f6];
+  }
+  .btn-ghost {
+    @apply btn border border-hull-600 bg-hull-850 text-ink-200 hover:border-hull-500 hover:bg-hull-800 hover:text-ink-100;
+  }
+  .btn-danger {
+    @apply btn border border-signal-red/40 bg-signal-red/10 text-signal-red hover:bg-signal-red/20;
+  }
+  .btn-sm {
+    @apply px-2.5 py-1.5 text-xs;
+  }
+  .input {
+    @apply w-full rounded-lg border border-hull-600 bg-hull-950/70 px-3 py-2 text-sm text-ink-100 placeholder:text-ink-400 focus:border-signal-cyan focus:outline-none;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-medium text-ink-300;
+  }
+  .num {
+    @apply font-display tabular-nums;
+  }
+  .prose-doc p {
+    @apply mb-3 max-w-[72ch] text-ink-200;
+  }
+  .prose-doc h3 {
+    @apply mb-2 mt-6 text-lg font-semibold;
+  }
+  .prose-doc ul {
+    @apply mb-3 max-w-[72ch] list-disc space-y-1 pl-5 text-ink-200;
+  }
+  .prose-doc code {
+    @apply rounded bg-hull-800 px-1.5 py-0.5 font-mono text-[0.85em] text-signal-cyan;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+.pulse-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pulse-ring 1.4s ease-out infinite;
+}
+@keyframes dash {
+  to {
+    stroke-dashoffset: -16;
+  }
+}
+.path-flow {
+  animation: dash 0.9s linear infinite;
+}

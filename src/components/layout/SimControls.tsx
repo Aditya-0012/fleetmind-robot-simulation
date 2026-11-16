@@ -15,8 +15,8 @@ export function SimControls() {
   const [confirmReset, setConfirmReset] = useState(false);
   const violations = checkInvariants(state);
   const failed = state.robots.filter((r) => r.state === 'FAILED').length;
-  const health = violations.length > 0 ? 'Inconsistent' : failed === 0 ? 'Nominal' : failed < state.robots.length ? 'Degraded' : 'Offline';
-  const healthColor = { Nominal: '#3EE6A0', Degraded: '#FFC247', Offline: '#FF5470', Inconsistent: '#FF5470' }[health];
+  const health = violations.length > 0 ? 'Needs attention' : failed === 0 ? 'All systems normal' : failed < state.robots.length ? 'Degraded' : 'Offline';
+  const healthColor = { 'All systems normal': '#3EE6A0', Degraded: '#FFC247', Offline: '#FF5470', 'Needs attention': '#FF5470' }[health];
   const status = state.finished ? 'Complete' : running ? 'Running' : state.tick === 0 ? 'Ready' : 'Paused';
 
   return (
@@ -30,7 +30,7 @@ export function SimControls() {
           {running ? <Pause size={16} /> : <Play size={16} />}
           <span className="hidden sm:inline">{running ? 'Pause' : state.tick === 0 ? 'Start' : 'Resume'}</span>
         </button>
-        <Tip text="Advance exactly one tick">
+        <Tip text="Advance by one second">
           <button className="btn-ghost px-2.5" onClick={sim.step} aria-label="Single step">
             <StepForward size={16} />
           </button>
@@ -56,7 +56,7 @@ export function SimControls() {
       </div>
 
       <div className="ml-auto flex items-center gap-3">
-        <Tip text={violations.length ? violations[0] : `${state.robots.length - failed}/${state.robots.length} robots operational, all state invariants hold`}>
+        <Tip text={violations.length ? violations[0] : `${state.robots.length - failed} of ${state.robots.length} robots working, all records consistent`}>
           <span className="flex items-center gap-2 text-xs text-ink-300">
             <span className="relative flex h-2.5 w-2.5">
               {running && <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60" style={{ backgroundColor: healthColor }} />}
@@ -80,7 +80,7 @@ export function SimControls() {
       <ConfirmDialog
         open={confirmReset}
         title="Reset the simulation?"
-        message={`"${state.scenarioName}" returns to tick 0. Robot positions, tasks, obstacles you added, metrics and the event log are cleared.`}
+        message={`"${state.scenarioName}" returns to the start. Robot positions, tasks, obstacles you added, metrics and the event log are cleared.`}
         confirmLabel="Reset"
         danger
         onConfirm={() => {

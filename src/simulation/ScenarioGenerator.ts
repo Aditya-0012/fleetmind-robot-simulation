@@ -63,7 +63,7 @@ export function generateScenario(opts: GeneratorOptions): GeneratedScenario {
       scenario: {
         id: `random-${opts.size}-${opts.robots}-${opts.tasks}-${Math.round(opts.density * 100)}-${opts.seed}`,
         name: `Random ${opts.size}×${opts.size} · seed ${opts.seed}`,
-        description: `${opts.robots} robots, ${opts.tasks} tasks, ${Math.round(opts.density * 100)}% obstacles. All entities placed in one connected region of ${comp.size} cells.`,
+        description: `${opts.robots} robots, ${opts.tasks} tasks, ${Math.round(opts.density * 100)}% obstacles. Every robot and task sits in one connected area of ${comp.size} cells, so all tasks are reachable.`,
         rows: opts.size,
         cols: opts.size,
         obstacles,

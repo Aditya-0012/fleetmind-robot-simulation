@@ -3,7 +3,7 @@
 **Course:** Design and Analysis of Algorithms (DAA)
 **Type:** Software-only algorithm simulation (no hardware, no backend, no API keys)
 
-FleetMind simulates a fleet of autonomous robots on a 2-D warehouse grid. Robots receive tasks, plan shortest routes, do the work, and adapt when robots break down, aisles get blocked or emergency jobs arrive. Every behaviour comes from real implementations of **A\***, **Dijkstra**, **BFS**, **Greedy allocation** and the **Hungarian algorithm**. They run inside a deterministic, tick-based engine that is fully separate from the React UI.
+FleetMind simulates a fleet of autonomous robots on a 2-D warehouse grid. Robots receive tasks, plan shortest routes, do the work, and adapt when robots break down, aisles get blocked or emergency jobs arrive. Every behaviour comes from real implementations of **A\***, **Dijkstra**, **BFS**, **Greedy allocation** and the **Hungarian algorithm**. The app itself uses plain industry language instead: see *Interface names* below. They run inside a deterministic, tick-based engine that is fully separate from the React UI.
 
 ---
 
@@ -15,6 +15,25 @@ R robots share a grid floor with obstacles. T tasks appear at cells over time, e
 2. **How each robot reaches its task** (a shortest-path problem on a changing graph).
 
 It must also recover automatically without losing or duplicating tasks.
+
+## Interface names
+
+The web app avoids algorithm jargon. This is how its labels map to the implementation:
+
+| In the app | Technical name | Source |
+|---|---|---|
+| Targeted routing | A* search (Manhattan heuristic) | `src/algorithms/pathfinding/astar.ts` |
+| Exhaustive routing | Dijkstra's algorithm | `src/algorithms/pathfinding/dijkstra.ts` |
+| Quick dispatch | Greedy allocation | `src/algorithms/allocation/greedy.ts` |
+| Optimized dispatch | Hungarian algorithm (repeated batches) | `src/algorithms/allocation/hungarian.ts` |
+| Score / "What matters when assigning" | Cost function αD + βW + γP + δL | `src/algorithms/allocation/costFunction.ts` |
+| Cells searched | Nodes expanded | search result `nodesExplored` |
+| Reroute | Dynamic replanning | `src/simulation/ReplanningManager.ts` |
+| Reassignment | Task reallocation | `src/simulation/FailureManager.ts` |
+| Breakdown | Robot failure (state FAILED) | `src/simulation/FailureManager.ts` |
+| Unreachable | Task state BLOCKED | `src/models/Task.ts` |
+
+The DAA theory and viva material is kept in `docs/` (`ALGORITHM_ANALYSIS.md`, `VIVA_QUESTIONS.md`) and is not part of the app.
 
 ## 2. Objectives
 
@@ -31,12 +50,11 @@ It must also recover automatically without losing or duplicating tasks.
 | **Login** | Register, sign in and sign out. Passwords are hashed with PBKDF2-SHA-256 (120 000 iterations, random salt) via Web Crypto. Sessions last 12 h. All app pages sit behind protected routes. Demo account: `demo@fleetmind.dev` / `demo1234` |
 | **Dashboard** | Robot and task state breakdowns, 10 live performance metrics, live mini-map, charts, recent events, a health indicator and quick actions (start/pause, demo, fail busiest robot, emergency task, block a route) |
 | **Live simulation** | Interactive SVG floor map. Tools: inspect, place/remove obstacle, add task (priority 1–5), block a robot's route, fail/restore a robot, and multiple simultaneous failures. Also: A*/Dijkstra and Greedy/Hungarian switches, live cost-weight sliders, capacity, search-overlay toggle, robot/task inspectors with cost breakdown and task history |
-| **Algorithms** | Docs for A*, Dijkstra, BFS, Greedy and Hungarian: problem, principle, steps, pseudocode, complexity, data structures, best/worst case, pros/cons, applications. **Search lab**: draw walls, step through A*/Dijkstra, inspect g/h/f for any node. **Assignment lab**: an editable cost matrix that runs Greedy and Hungarian side by side |
+| **How it works** | Plain-language explanations of route planning, task dispatch and disruption handling. **Route explorer**: draw walls and step through a search, inspecting the distance estimates of any cell. **Dispatch lab**: an editable score table that runs both dispatch methods side by side |
 | **Performance** | A* vs Dijkstra on 40 identical start/goal pairs; Greedy vs Hungarian on one shared cost matrix; all 6 scenarios × 3 configurations run headless. Bar and line charts, tables, and CSV/JSON export |
 | **Scenarios** | 6 deterministic scenarios with previews, plus a seeded random generator (20/30/50 grid, 2/3/5/10 robots, 5/10/20/50 tasks, 10/20/30 % obstacles) that guarantees reachability |
 | **Demo mode** | One click runs the combined failure scenario with a narrated, step-by-step timeline. Each step lights up only when the engine state proves it happened. Pause, resume and restart are supported |
 | **Event history** | Full log with timestamps, type, severity, robot and task. Filters, search, CSV export, and a clear button with confirmation |
-| **DAA theory / Viva** | Problem modelling, objective, correctness and complexity tables. 47 viva questions (30 core + 17 follow-up) with search, topic filters, shuffle and practice mode |
 
 ## 4. Technology stack
 
@@ -79,11 +97,12 @@ src/
                   invariants.ts  metrics.ts  scenarios.ts  ScenarioGenerator.ts  DemoController.ts  context.ts
   models/         Grid.ts  Robot.ts  Task.ts  Event.ts  SimulationState.ts
   components/     layout/  dashboard/  simulation/  analytics/  charts/  common/  auth/
-  pages/          Login  Register  Dashboard  Simulation  Algorithms  Performance  Scenarios
-                  EventHistory  Theory  Viva  About
+  pages/          Login  Register  Dashboard  Simulation  Algorithms ("How it works")  Performance
+                  Scenarios  EventHistory  About
   context/        AuthContext.tsx  SimulationContext.tsx
   services/       authService.ts  benchmarks.ts
-  data/           algorithmDocs.ts  vivaQuestions.ts
+  data/           algorithmDocs.ts (plain-language method descriptions)
+  utils/labels.ts plain-language names for states and events
   utils/          format.ts  random.ts
 tests/
   algorithms/  allocation/  simulation/  scenarios/  ui/
@@ -177,9 +196,9 @@ On Windows (Git Bash, PowerShell or CMD) the commands are identical. No database
    - *Obstacle*: add or remove an obstacle. If it lands on an active route, that robot replans immediately.
    - *Add task*: choose a priority (5 = critical) and click a free cell.
    - *Block route*: click a moving robot.
-   - *Fail / restore*: click a robot.
-   - **Multiple failures** (top right) fails several robots in the same tick.
-4. Switch **A* / Dijkstra** and **Greedy / Hungarian** at any time. The next plan or allocation uses the new choice.
+   - *Breakdown*: click a robot to break it down or repair it.
+   - **Multiple breakdowns** (top right) breaks down several robots at the same moment.
+4. Switch **Routing: Targeted / Exhaustive** and **Dispatch: Quick / Optimized** at any time. The next route or assignment uses the new choice.
 5. **Scenarios** loads any predefined or random scenario. Random scenarios are reproducible from their seed.
 
 ## 12. Scenarios
@@ -195,7 +214,7 @@ On Windows (Git Bash, PowerShell or CMD) the commands are identical. No database
 
 ## 13. Demo mode (for the presentation)
 
-Click **Demo mode** in the top bar. The combined scenario loads with A* routing and the simulation starts at 1×. A narrated timeline on the right steps through 10 stages: warehouse loaded → initial allocation → routes and movement → R2 fails → automatic reassignment → obstacle on a live route → A* replanning → emergency task → emergency handled → mission complete. Notifications show the failure-recovery summary (affected tasks, reallocation status, new assignments, replanning) and every *PATH INVALIDATED / REPLANNING / NEW PATH GENERATED* event. Use the demo panel to pause, restart or exit. See `docs/PROJECT_DEMONSTRATION.md` for a full talk track.
+Click **Demo mode** in the top bar. The combined scenario loads with targeted (A*) routing and the simulation starts at 1×. A narrated timeline on the right steps through 10 stages: warehouse loaded → initial allocation → routes and movement → R2 fails → automatic reassignment → obstacle on a live route → A* replanning → emergency task → emergency handled → mission complete. Notifications show the failure-recovery summary (affected tasks, reallocation status, new assignments, replanning) and every *Route blocked / Rerouting / New route found* event. Use the demo panel to pause, restart or exit. See `docs/PROJECT_DEMONSTRATION.md` for a full talk track.
 
 ## 14. Screenshots
 

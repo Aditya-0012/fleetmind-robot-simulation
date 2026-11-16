@@ -49,7 +49,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
             The work still gets done.
           </h1>
           <p className="mt-4 max-w-md text-ink-300">
-            Watch a live run below: tasks are allocated, one robot breaks down, a route is blocked and replanned, and an emergency job jumps the queue.
+            Watch a live run below: tasks are handed out, one robot breaks down, an aisle is blocked and a robot reroutes, and an emergency job jumps the queue.
           </p>
         </div>
         <div className="relative mt-8 flex-1">
@@ -65,7 +65,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
             tasks <span className="text-signal-green">{done}</span>/{s.tasks.length}
           </span>
           <span>
-            replans <span className="text-signal-amber">{s.metrics.replans}</span>
+            reroutes <span className="text-signal-amber">{s.metrics.replans}</span>
           </span>
           <span className="truncate text-ink-400">{last?.message}</span>
         </div>

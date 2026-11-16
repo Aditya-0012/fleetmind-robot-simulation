@@ -170,9 +170,9 @@ export interface ScenarioRun {
 }
 
 export const RUN_CONFIGS: { label: string; config: Partial<SimConfig> }[] = [
-  { label: 'A* + Greedy', config: { pathAlgorithm: 'astar', allocationAlgorithm: 'greedy' } },
-  { label: 'A* + Hungarian', config: { pathAlgorithm: 'astar', allocationAlgorithm: 'hungarian' } },
-  { label: 'Dijkstra + Greedy', config: { pathAlgorithm: 'dijkstra', allocationAlgorithm: 'greedy' } },
+  { label: 'Targeted + Quick', config: { pathAlgorithm: 'astar', allocationAlgorithm: 'greedy' } },
+  { label: 'Targeted + Optimized', config: { pathAlgorithm: 'astar', allocationAlgorithm: 'hungarian' } },
+  { label: 'Exhaustive + Quick', config: { pathAlgorithm: 'dijkstra', allocationAlgorithm: 'greedy' } },
 ];
 
 /** Runs every predefined scenario headless under each configuration. Deterministic. */

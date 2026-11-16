@@ -38,7 +38,7 @@ export function AllocationLab() {
       <td key={j} className="p-1">
         <div className={`relative rounded-md ${hh ? 'ring-2 ring-signal-green' : ''}`}>
           <input
-            aria-label={`Cost robot ${i + 1} task ${j + 1}`}
+            aria-label={`Score robot ${i + 1} task ${j + 1}`}
             value={matrix[i][j]}
             onChange={(e) => set(i, j, e.target.value)}
             className={`w-14 rounded-md border bg-hull-950 px-2 py-1.5 text-center font-mono text-sm ${gh ? 'border-signal-amber text-signal-amber' : 'border-hull-600 text-ink-100'}`}
@@ -52,7 +52,7 @@ export function AllocationLab() {
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <button className="btn-ghost btn-sm" onClick={() => setMatrix(PRESET)}>
-          <Play size={14} /> Greedy trap (2×2)
+          <Play size={14} /> Where quick goes wrong (2×2)
         </button>
         <button className="btn-ghost btn-sm" onClick={() => randomise(4, 4)}>
           <Dices size={14} /> Random 4×4
@@ -88,25 +88,25 @@ export function AllocationLab() {
         <dl className="space-y-2 text-sm">
           <div>
             <dt className="flex items-center gap-2 text-ink-300">
-              <span className="h-3 w-3 rounded-sm border-2 border-signal-amber" /> Greedy (task order T1, T2, …)
+              <span className="h-3 w-3 rounded-sm border-2 border-signal-amber" /> Quick dispatch (tasks in order T1, T2, …)
             </dt>
             <dd className="num text-xl font-semibold text-signal-amber">{res.g.totalCost.toFixed(2)}</dd>
           </div>
           <div>
             <dt className="flex items-center gap-2 text-ink-300">
-              <span className="h-3 w-3 rounded-sm ring-2 ring-signal-green" /> Hungarian (optimal)
+              <span className="h-3 w-3 rounded-sm ring-2 ring-signal-green" /> Optimized dispatch (best total)
             </dt>
             <dd className="num text-xl font-semibold text-signal-green">{res.h.totalCost.toFixed(2)}</dd>
           </div>
           <dd className="max-w-[260px] text-xs text-ink-400">
             {res.g.totalCost - res.h.totalCost > 1e-9
-              ? `Greedy pays ${(res.g.totalCost - res.h.totalCost).toFixed(2)} more because an early cheap choice blocked a better pairing.`
-              : 'Both found the same total here — greedy is optimal on this instance.'}{' '}
-            Hungarian solved a padded {res.h.size}×{res.h.size} matrix in {res.h.operations} inner-loop steps.
+              ? `Quick dispatch scores ${(res.g.totalCost - res.h.totalCost).toFixed(2)} worse: grabbing the best robot for T1 left a poor match for the next task.`
+              : 'Both found the same total here — quick dispatch happened to get the best answer.'}{' '}
+            
           </dd>
         </dl>
       </div>
-      <p className="text-xs text-ink-400">Edit any cost to re-run both algorithms instantly.</p>
+      <p className="text-xs text-ink-400">Edit any score to re-run both methods instantly. Lower is better.</p>
     </div>
   );
 }

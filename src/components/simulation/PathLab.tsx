@@ -140,7 +140,7 @@ export function PathLab({ initialAlgorithm = 'astar' }: { initialAlgorithm?: Pat
 
   const pathKeys = useMemo(() => new Set(finished && result?.found ? result.path.map((p) => toKey(p, COLS)) : []), [finished, result]);
   const ins = inspect !== null ? view.scores.get(inspect) : undefined;
-  const insStatus = inspect === null ? '' : view.closed.has(inspect) ? 'closed set' : view.open.has(inspect) ? 'open set' : grid.obstacles[inspect] ? 'obstacle' : 'unvisited';
+  const insStatus = inspect === null ? '' : view.closed.has(inspect) ? 'already checked' : view.open.has(inspect) ? 'next to check' : grid.obstacles[inspect] ? 'wall' : 'not reached yet';
 
   const runCompare = () => {
     setCompare([astar(grid, start, goal), dijkstra(grid, start, goal)]);
@@ -150,7 +150,7 @@ export function PathLab({ initialAlgorithm = 'astar' }: { initialAlgorithm?: Pat
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <Segmented
-          ariaLabel="Algorithm"
+          ariaLabel="Routing method"
           size="sm"
           value={alg}
           onChange={(v) => {
@@ -158,8 +158,8 @@ export function PathLab({ initialAlgorithm = 'astar' }: { initialAlgorithm?: Pat
             invalidate();
           }}
           options={[
-            { value: 'astar', label: 'A*' },
-            { value: 'dijkstra', label: 'Dijkstra' },
+            { value: 'astar', label: 'Targeted' },
+            { value: 'dijkstra', label: 'Exhaustive' },
           ]}
         />
         <Segmented
@@ -177,7 +177,7 @@ export function PathLab({ initialAlgorithm = 'astar' }: { initialAlgorithm?: Pat
         <div className="ml-auto flex flex-wrap gap-1.5">
           <button className="btn-primary btn-sm" onClick={() => (result && !finished ? setPlaying(!playing) : run(true))}>
             {playing ? <Pause size={14} /> : <Play size={14} />}
-            {playing ? 'Pause' : result && !finished ? 'Resume' : 'Run search'}
+            {playing ? 'Pause' : result && !finished ? 'Resume' : 'Find route'}
           </button>
           <button className="btn-ghost btn-sm" onClick={ensureRun} disabled={finished}>
             <StepForward size={14} /> Step
@@ -185,7 +185,7 @@ export function PathLab({ initialAlgorithm = 'astar' }: { initialAlgorithm?: Pat
           <button className="btn-ghost btn-sm" onClick={() => { if (!result) run(false); setStep(Number.MAX_SAFE_INTEGER); setPlaying(false); }}>
             <SkipForward size={14} /> Finish
           </button>
-          <button className="btn-ghost btn-sm" onClick={invalidate} title="Clear search state">
+          <button className="btn-ghost btn-sm" onClick={invalidate} title="Clear the search">
             <RotateCcw size={14} />
           </button>
           <button className="btn-ghost btn-sm" onClick={() => { setGrid(createGrid(ROWS, COLS)); invalidate(); }} title="Remove all walls">
@@ -200,7 +200,7 @@ export function PathLab({ initialAlgorithm = 'astar' }: { initialAlgorithm?: Pat
             viewBox={`0 0 ${COLS * C} ${ROWS * C}`}
             className="block w-full touch-none select-none"
             role="img"
-            aria-label="Pathfinding visualiser grid"
+            aria-label="Route explorer grid"
             onPointerDown={(e) => {
               const p = cellAt(e);
               if (!p) return;
@@ -241,10 +241,10 @@ export function PathLab({ initialAlgorithm = 'astar' }: { initialAlgorithm?: Pat
             ))}
           </svg>
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 px-1 text-[11px] text-ink-400">
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-[#3B2F73]" /> open set (frontier)</span>
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-[#164257]" /> closed set (expanded)</span>
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-signal-amber" /> current node</span>
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-signal-green" /> final path</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-[#3B2F73]" /> next to check</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-[#164257]" /> already checked</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-signal-amber" /> checking now</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-signal-green" /> route found</span>
             <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-[#26355C]" /> wall</span>
             <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-[#0A1020] ring-1 ring-hull-600" /> unvisited</span>
           </div>
@@ -254,7 +254,7 @@ export function PathLab({ initialAlgorithm = 'astar' }: { initialAlgorithm?: Pat
           <div className="panel-inset p-3">
             <p className="text-xs text-ink-400">Progress</p>
             <p className="num mt-0.5 text-lg font-semibold">
-              {Math.min(step, total)} / {total || '—'} <span className="text-xs font-normal text-ink-400">trace steps</span>
+              {Math.min(step, total)} / {total || '—'} <span className="text-xs font-normal text-ink-400">search steps</span>
             </p>
             <label className="mt-2 block text-xs text-ink-400">
               Playback speed
@@ -262,24 +262,23 @@ export function PathLab({ initialAlgorithm = 'astar' }: { initialAlgorithm?: Pat
             </label>
             {result && (
               <dl className="mt-2 space-y-1 text-sm">
-                <div className="flex justify-between"><dt className="text-ink-400">Open set</dt><dd className="num">{view.open.size}</dd></div>
-                <div className="flex justify-between"><dt className="text-ink-400">Closed set</dt><dd className="num">{view.closed.size}</dd></div>
+                <div className="flex justify-between"><dt className="text-ink-400">Next to check</dt><dd className="num">{view.open.size}</dd></div>
+                <div className="flex justify-between"><dt className="text-ink-400">Already checked</dt><dd className="num">{view.closed.size}</dd></div>
                 {finished && (
                   <>
-                    <div className="flex justify-between"><dt className="text-ink-400">Path length</dt><dd className="num">{result.found ? `${result.cost} steps` : 'unreachable'}</dd></div>
-                    <div className="flex justify-between"><dt className="text-ink-400">Nodes explored</dt><dd className="num">{result.nodesExplored}</dd></div>
-                    <div className="flex justify-between"><dt className="text-ink-400">Heap pushes</dt><dd className="num">{result.heapPushes}</dd></div>
-                  </>
+                    <div className="flex justify-between"><dt className="text-ink-400">Route length</dt><dd className="num">{result.found ? `${result.cost} cells` : 'no route'}</dd></div>
+                    <div className="flex justify-between"><dt className="text-ink-400">Cells searched</dt><dd className="num">{result.nodesExplored}</dd></div>
+                                      </>
                 )}
               </dl>
             )}
-            {result && !result.found && finished && <p className="mt-2 text-xs text-signal-red">{result.error}</p>}
+            {result && !result.found && finished && <p className="mt-2 text-xs text-signal-red">The goal cannot be reached — walls block every way in.</p>}
           </div>
 
           <div className="panel-inset p-3">
-            <p className="text-xs text-ink-400">Node inspector {mode !== 'inspect' && <span>(choose Inspect, then click a cell)</span>}</p>
+            <p className="text-xs text-ink-400">Cell details {mode !== 'inspect' && <span>(choose Inspect, then click a cell)</span>}</p>
             {inspect === null ? (
-              <p className="mt-1 text-sm text-ink-300">No node selected.</p>
+              <p className="mt-1 text-sm text-ink-300">No cell selected.</p>
             ) : (
               <div className="mt-1 text-sm">
                 <p className="font-mono">
@@ -288,24 +287,24 @@ export function PathLab({ initialAlgorithm = 'astar' }: { initialAlgorithm?: Pat
                 {ins ? (
                   <dl className="mt-2 grid grid-cols-3 gap-2 text-center">
                     {(['g', 'h', 'f'] as const).map((k) => (
-                      <div key={k} className="rounded-md bg-hull-800 py-1.5">
-                        <dt className="font-mono text-[11px] text-ink-400">{k}(n)</dt>
+                      <div key={k} className="rounded-md bg-hull-800 px-1 py-1.5">
+                        <dt className="text-[10.5px] leading-tight text-ink-400">{{ g: 'Driven so far', h: 'Estimate left', f: 'Total estimate' }[k]}</dt>
                         <dd className="num text-lg font-semibold text-signal-cyan">{ins[k]}</dd>
                       </div>
                     ))}
                   </dl>
                 ) : (
-                  <p className="mt-1 text-xs text-ink-400">Not reached by the search at this step.</p>
+                  <p className="mt-1 text-xs text-ink-400">The search has not reached this cell yet.</p>
                 )}
-                {ins && ins.parent >= 0 && <p className="mt-2 text-xs text-ink-400">Parent: {pointLabel(fromKey(ins.parent, COLS))}</p>}
-                {alg === 'dijkstra' && ins && <p className="mt-1 text-xs text-ink-400">Dijkstra uses no heuristic, so h = 0 and f = g.</p>}
+                {ins && ins.parent >= 0 && <p className="mt-2 text-xs text-ink-400">Reached from {pointLabel(fromKey(ins.parent, COLS))}</p>}
+                {alg === 'dijkstra' && ins && <p className="mt-1 text-xs text-ink-400">Exhaustive routing makes no estimate of the distance left, so it is always 0.</p>}
               </div>
             )}
           </div>
 
           <div className="panel-inset p-3">
             <div className="flex items-center justify-between">
-              <p className="text-xs text-ink-400">Same grid, both algorithms</p>
+              <p className="text-xs text-ink-400">Same map, both methods</p>
               <button className="text-xs text-signal-cyan hover:underline" onClick={runCompare}>
                 Compare
               </button>
@@ -315,14 +314,13 @@ export function PathLab({ initialAlgorithm = 'astar' }: { initialAlgorithm?: Pat
                 <thead className="text-ink-400">
                   <tr>
                     <th className="text-left font-normal"></th>
-                    <th className="text-right font-normal">A*</th>
-                    <th className="text-right font-normal">Dijkstra</th>
+                    <th className="text-right font-normal">Targeted</th>
+                    <th className="text-right font-normal">Exhaustive</th>
                   </tr>
                 </thead>
                 <tbody className="num">
-                  <tr><td className="text-ink-300">Path</td><td className="text-right">{compare[0].found ? compare[0].cost : '—'}</td><td className="text-right">{compare[1].found ? compare[1].cost : '—'}</td></tr>
-                  <tr><td className="text-ink-300">Explored</td><td className="text-right text-signal-cyan">{compare[0].nodesExplored}</td><td className="text-right">{compare[1].nodesExplored}</td></tr>
-                  <tr><td className="text-ink-300">Max open</td><td className="text-right">{compare[0].maxOpenSize}</td><td className="text-right">{compare[1].maxOpenSize}</td></tr>
+                  <tr><td className="text-ink-300">Route</td><td className="text-right">{compare[0].found ? compare[0].cost : '—'}</td><td className="text-right">{compare[1].found ? compare[1].cost : '—'}</td></tr>
+                  <tr><td className="text-ink-300">Cells searched</td><td className="text-right text-signal-cyan">{compare[0].nodesExplored}</td><td className="text-right">{compare[1].nodesExplored}</td></tr>
                   <tr><td className="text-ink-300">Time</td><td className="text-right">{fmtMs(compare[0].timeMs)}</td><td className="text-right">{fmtMs(compare[1].timeMs)}</td></tr>
                 </tbody>
               </table>

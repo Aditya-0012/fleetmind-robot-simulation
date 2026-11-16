@@ -20,7 +20,7 @@ function Preview({ scenario }: { scenario: ScenarioDefinition }) {
   );
 }
 
-const EVENT_TEXT: Record<string, string> = { fail: 'robot failure', restore: 'restore', obstacle: 'obstacle', blockPath: 'route blocked', task: 'new task', priority: 'priority change' };
+const EVENT_TEXT: Record<string, string> = { fail: 'robot breakdown', restore: 'robot repaired', obstacle: 'obstacle', blockPath: 'aisle blocked', task: 'new task', priority: 'priority change' };
 
 export default function Scenarios() {
   const sim = useSim();

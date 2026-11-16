@@ -3,8 +3,8 @@ import type { Point } from '../../models/Grid';
 export type PathAlgorithm = 'astar' | 'dijkstra';
 
 export const PATH_ALGORITHM_LABEL: Record<PathAlgorithm, string> = {
-  astar: 'A* search',
-  dijkstra: 'Dijkstra',
+  astar: 'Targeted routing',
+  dijkstra: 'Exhaustive routing',
 };
 
 /** One step of the recorded search, used by the step-by-step visualiser. */

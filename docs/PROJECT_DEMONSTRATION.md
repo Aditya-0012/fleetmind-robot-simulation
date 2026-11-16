@@ -25,7 +25,7 @@ Click **Demo mode** (top right). Narrate the right-hand timeline as each step li
 | 00:01+ | Robots move | A*, f = g + h, Manhattan heuristic. The overlay shows explored nodes; the dashed line is the path |
 | **00:05** | **R2 fails** | The toast shows affected tasks T3, T5, *2/2 reassigned*, and the new owners. R2 becomes an obstacle |
 | 00:05 | Reassignment | Allocation re-ran over the surviving robots only. Completed work is untouched |
-| **00:09** | **Pallet drops on a live route** | Event log: *PATH INVALIDATED → REPLANNING → NEW PATH GENERATED* |
+| **00:09** | **Pallet drops on a live route** | Event log: *Route blocked → Rerouting → New route found* (dynamic replanning) |
 | **00:13** | **Emergency task T9 (critical)** | Priority penalty P = 0. R3 pre-empts its lower-priority job (log: "R3 pre-empted T6 …") |
 | ~00:16 | Emergency handled | T9 completed first |
 | 00:20 | Second blockage | Another replan |
@@ -33,16 +33,18 @@ Click **Demo mode** (top right). Narrate the right-hand timeline as each step li
 
 Use **Pause** in the demo panel to stop at any step and click a robot or task to show the inspector (cost breakdown, task history).
 
-## 3. Algorithms (2 min)
+## 3. How it works (2 min)
 
-- **A\* tab → Search lab:** click *Run search*, then *Pause*. Choose *Inspect* and click a frontier cell to show g, h, f. Switch to Dijkstra and run again: same path, much larger explored region. Click *Compare*.
-- **Hungarian tab → Assignment lab:** the default 2×2 "greedy trap" shows Greedy = 101 vs Hungarian = 4. Edit a cell to show both re-run live.
+The app uses plain names; say the technical name as you point: *Targeted routing = A\**, *Exhaustive routing = Dijkstra*, *Quick dispatch = Greedy*, *Optimized dispatch = Hungarian*.
+
+- **Route planning tab → Route explorer:** click *Find route*, then *Pause*. Choose *Inspect* and click a purple cell: *Driven so far* = g(n), *Estimate left* = h(n), *Total estimate* = f(n). Switch to *Exhaustive* and run again: same route, much larger searched area. Click *Compare*.
+- **Task dispatch tab → Dispatch lab:** the default 2×2 example shows Quick = 101 vs Optimized = 4. Edit a cell to show both re-run live.
 
 ## 4. Performance (2 min)
 
 Click all three *Run* buttons:
-- A* vs Dijkstra on 40 identical pairs: equal path lengths, about 90 % fewer nodes for A*.
-- Greedy vs Hungarian on one matrix: Hungarian total ≤ Greedy (green vs amber cells).
+- Targeted vs exhaustive routing on 40 identical trips: equal route lengths, about 90 % fewer cells searched by targeted (A\*).
+- Quick vs optimized dispatch on one score table: optimized (Hungarian) total ≤ quick (Greedy).
 - 18 headless scenario runs.
 
 Mention that timings vary by machine; node counts don't. Export CSV/JSON if asked.
@@ -51,9 +53,9 @@ Mention that timings vary by machine; node counts don't. Export CSV/JSON if aske
 
 On **Live simulation** (Scenarios → load *Normal operation*, press Start):
 - *Obstacle* tool on a robot's dashed route → immediate replan.
-- *Fail / restore* on two robots, or **Multiple failures**.
+- *Breakdown* on two robots, or **Multiple breakdowns**.
 - *Add task* with priority 5 → pre-emption.
-- Switch to **Hungarian** and **Dijkstra** mid-run.
+- Switch to **Optimized** dispatch and **Exhaustive** routing mid-run.
 
 ## Likely questions
 

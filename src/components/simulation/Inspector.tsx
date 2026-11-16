@@ -6,7 +6,8 @@ import type { Point } from '../../models/Grid';
 import { robotWorkload } from '../../models/Robot';
 import { PRIORITY_LABEL } from '../../models/Task';
 import { formatTick } from '../../models/Event';
-import { PRIORITY_COLOR, ROBOT_STATE_COLOR, TASK_STATUS_COLOR, titleCase } from '../../utils/format';
+import { PRIORITY_COLOR, ROBOT_STATE_COLOR, TASK_STATUS_COLOR } from '../../utils/format';
+import { ROBOT_STATE_LABEL, TASK_STATUS_LABEL } from '../../utils/labels';
 import { Badge, EmptyState, Segmented } from '../common/ui';
 import { useToast } from '../common/Toaster';
 
@@ -47,32 +48,32 @@ export function Inspector({ selection, onSelect }: { selection: Selection; onSel
           <div>
             <p className="font-display text-lg font-semibold leading-none">Robot {r.id}</p>
             <div className="mt-1.5">
-              <Badge color={ROBOT_STATE_COLOR[r.state]}>{titleCase(r.state)}</Badge>
+              <Badge color={ROBOT_STATE_COLOR[r.state]}>{ROBOT_STATE_LABEL[r.state]}</Badge>
             </div>
           </div>
         </div>
         <dl className="mt-4 divide-y divide-hull-800">
           <Row k="Position">{pointLabel(r.position)}</Row>
           <Row k="Current target">{cur ? `${cur.id} at ${pointLabel(cur.position)}` : '—'}</Row>
-          <Row k="Route remaining">{remaining ? `${remaining} steps` : '—'}</Row>
-          <Row k="Workload">{robotWorkload(r)} / {state.config.capacity} tasks</Row>
-          <Row k="Queue">{r.queue.length ? r.queue.join(', ') : 'empty'}</Row>
+          <Row k="Route remaining">{remaining ? `${remaining} cells` : '—'}</Row>
+          <Row k="Current load">{robotWorkload(r)} / {state.config.capacity} tasks</Row>
+          <Row k="Up next">{r.queue.length ? r.queue.join(', ') : 'empty'}</Row>
           <Row k="Distance travelled">{r.distanceTravelled} cells</Row>
           <Row k="Completed">{r.completedTaskIds.length ? r.completedTaskIds.join(', ') : 'none yet'}</Row>
-          <Row k="Replans · failures">
+          <Row k="Reroutes · breakdowns">
             {r.replans} · {r.failures}
           </Row>
-          {r.state === 'EXECUTING' && <Row k="Execution left">{r.executionRemaining}s</Row>}
-          {r.failedAt !== null && <Row k="Failed at">{formatTick(r.failedAt)}</Row>}
+          {r.state === 'EXECUTING' && <Row k="Work left">{r.executionRemaining}s</Row>}
+          {r.failedAt !== null && <Row k="Broke down at">{formatTick(r.failedAt)}</Row>}
         </dl>
         <div className="mt-4 flex flex-wrap gap-2">
           {r.state === 'FAILED' ? (
             <button className="btn-primary btn-sm" onClick={() => report(engine.restoreRobot(r.id), engine.robot(r.id)?.state === 'IDLE' ? `${r.id} restored` : 'Restore failed')}>
-              <RotateCcw size={14} /> Restore robot
+              <RotateCcw size={14} /> Repair robot
             </button>
           ) : (
             <button className="btn-danger btn-sm" onClick={() => engine.failRobot(r.id)}>
-              <ShieldAlert size={14} /> Fail robot
+              <ShieldAlert size={14} /> Break down robot
             </button>
           )}
           <button className="btn-ghost btn-sm" disabled={r.state !== 'MOVING'} onClick={() => { const x = engine.blockActivePath(r.id); report(x.ok, x.message); }}>
@@ -96,7 +97,7 @@ export function Inspector({ selection, onSelect }: { selection: Selection; onSel
           <div>
             <p className="font-display text-lg font-semibold leading-none">Task {t.id}</p>
             <div className="mt-1.5">
-              <Badge color={TASK_STATUS_COLOR[t.status]}>{titleCase(t.status)}</Badge>
+              <Badge color={TASK_STATUS_COLOR[t.status]}>{TASK_STATUS_LABEL[t.status]}</Badge>
             </div>
           </div>
         </div>
@@ -135,12 +136,14 @@ export function Inspector({ selection, onSelect }: { selection: Selection; onSel
         </dl>
         {alloc && (
           <div className="panel-inset mt-3 p-3">
-            <p className="text-xs font-medium text-ink-300">Last assignment cost → {alloc.robotId}</p>
-            <p className="mt-1 font-mono text-[11.5px] leading-relaxed text-ink-200">
-              α·{alloc.breakdown.Dn.toFixed(3)} + β·{alloc.breakdown.Wn.toFixed(3)} + γ·{alloc.breakdown.P.toFixed(3)} + δ·{alloc.breakdown.Ln.toFixed(3)}
-              <br />= <span className="text-signal-cyan">{alloc.cost.toFixed(4)}</span>
-              <span className="text-ink-400"> (D={alloc.breakdown.D}, W={alloc.breakdown.W}, L={alloc.breakdown.L})</span>
-            </p>
+            <p className="text-xs font-medium text-ink-300">Why {alloc.robotId} was chosen (lower score = better fit)</p>
+            <dl className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs">
+              <dt className="text-ink-400">Distance</dt><dd className="text-right text-ink-200">{alloc.breakdown.D} cells</dd>
+              <dt className="text-ink-400">Robot's load</dt><dd className="text-right text-ink-200">{alloc.breakdown.W} tasks</dd>
+              <dt className="text-ink-400">Urgency</dt><dd className="text-right text-ink-200">{PRIORITY_LABEL[t.priority]}</dd>
+              <dt className="text-ink-400">Could finish in</dt><dd className="text-right text-ink-200">{alloc.breakdown.L}s</dd>
+              <dt className="text-ink-300">Score</dt><dd className="text-right font-semibold text-signal-cyan">{alloc.cost.toFixed(2)}</dd>
+            </dl>
           </div>
         )}
         <div className="mt-4">
@@ -150,7 +153,7 @@ export function Inspector({ selection, onSelect }: { selection: Selection; onSel
               <li key={i} className="flex items-center gap-2 text-xs">
                 <CornerDownRight size={12} className="text-ink-400" />
                 <span className="font-mono text-ink-400">{formatTick(h.tick)}</span>
-                <span style={{ color: TASK_STATUS_COLOR[h.status] }}>{titleCase(h.status)}</span>
+                <span style={{ color: TASK_STATUS_COLOR[h.status] }}>{TASK_STATUS_LABEL[h.status]}</span>
                 {h.robotId && <span className="text-ink-300">{h.robotId}</span>}
               </li>
             ))}
@@ -168,7 +171,7 @@ export function Inspector({ selection, onSelect }: { selection: Selection; onSel
   return (
     <div>
       <p className="font-display text-lg font-semibold">Cell {pointLabel(p)}</p>
-      <p className="mt-1 text-sm text-ink-300">{blocked ? 'Obstacle — impassable for every robot.' : robotHere ? `${robotHere.id} is here.` : conflict ? conflict : 'Free floor cell.'}</p>
+      <p className="mt-1 text-sm text-ink-300">{blocked ? 'Obstacle — no robot can drive through it.' : robotHere ? `${robotHere.id} is here.` : conflict ? conflict : 'Free floor cell.'}</p>
       <div className="mt-4 flex flex-wrap gap-2">
         {blocked ? (
           <button className="btn-ghost btn-sm" onClick={() => { const x = engine.removeObstacle(p); report(x.ok, x.message); onSelect(null); }}>

@@ -161,8 +161,8 @@ describe('SimulationEngine — dynamic obstacles and replanning', () => {
     expect(r.state).toBe('MOVING');
     expect(r.path.some((p) => p.r === 0 && p.c === 5)).toBe(false);
     expect(r.path.length).toBeGreaterThan(before - r.pathIndex);
-    expect(e.state.events.some((ev) => ev.message.startsWith('PATH INVALIDATED'))).toBe(true);
-    expect(e.state.events.some((ev) => ev.message.startsWith('NEW PATH GENERATED'))).toBe(true);
+    expect(e.state.events.some((ev) => ev.message.startsWith('Route blocked'))).toBe(true);
+    expect(e.state.events.some((ev) => ev.message.startsWith('New route found'))).toBe(true);
     stepN(e, 30);
     expect(e.state.tasks[0].status).toBe('COMPLETED');
   });

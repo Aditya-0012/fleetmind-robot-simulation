@@ -76,7 +76,7 @@ export function runAllocation(ctx: EngineContext, trigger: string): { assigned: 
     ctx.log(
       'ALLOCATION',
       'info',
-      `${ALLOCATION_ALGORITHM_LABEL[result.algorithm]} allocation (${trigger}): ${result.assignments.length} assigned, total cost ${result.totalCost.toFixed(3)}`,
+      `${ALLOCATION_ALGORITHM_LABEL[result.algorithm]}: ${result.assignments.length} task${result.assignments.length === 1 ? '' : 's'} assigned (${trigger})`,
     );
   }
 
@@ -114,7 +114,7 @@ export function runAllocation(ctx: EngineContext, trigger: string): { assigned: 
       ctx.log(
         'TASK',
         'critical',
-        u.reason === 'no-robots' ? `${task.id} BLOCKED — no operational robots` : `${task.id} BLOCKED — unreachable by every operational robot`,
+        u.reason === 'no-robots' ? `${task.id} unreachable — no working robots left` : `${task.id} unreachable — no working robot can get there`,
         { taskId: task.id },
       );
     }

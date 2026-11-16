@@ -20,7 +20,7 @@ export function DemoPanel() {
           <h2 className="text-sm font-semibold text-[#D6CBFF]">Demo · combined failure scenario</h2>
           <p className="text-[11px] text-ink-300">
             Step {idx + 1} of {DEMO_STEPS.length}
-            {next && !state.finished ? ` · next scripted event at ${formatTick(next.at)}` : ''}
+            {next && !state.finished ? ` · next disruption at ${formatTick(next.at)}` : ''}
           </p>
         </div>
         <div className="flex gap-1">
@@ -40,7 +40,7 @@ export function DemoPanel() {
         <AnimatePresence mode="wait">
           <motion.div key={step.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.22 }}>
             <p className="font-display text-lg font-semibold">{step.title}</p>
-            <p className="mt-0.5 font-mono text-[11px] text-signal-violet">{step.algorithm}</p>
+            <p className="mt-0.5 text-[11px] text-signal-violet">{step.algorithm}</p>
             <p className="mt-2 text-sm text-ink-200">{step.explanation}</p>
           </motion.div>
         </AnimatePresence>

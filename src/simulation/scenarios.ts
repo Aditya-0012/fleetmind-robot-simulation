@@ -61,11 +61,11 @@ export const COMBINED_EVENTS: ScheduledAction[] = [
 ];
 
 export const SCENARIOS: ScenarioDefinition[] = [
-  base('normal', 'Normal operation', 'Four robots share eight pick tasks across the warehouse. No disruptions — a baseline for allocation and routing.', []),
+  base('normal', 'Normal operation', 'Four robots share eight pick tasks across the warehouse. No disruptions — a baseline run.', []),
   base('single-failure', 'Single robot failure', 'R1 suffers a fault at 6s. Its unfinished tasks are released and reassigned to the remaining robots.', [
     { at: 6, type: 'fail', robotId: 'R1', label: 'battery fault' },
   ]),
-  base('dynamic-obstacle', 'Dynamic obstacle', 'Obstacles appear on active routes at 4s and 10s, forcing path invalidation and replanning.', [
+  base('dynamic-obstacle', 'Dynamic obstacle', 'Obstacles appear on active routes at 4s and 10s, so robots must reroute.', [
     { at: 4, type: 'blockPath', label: 'crate fell into aisle' },
     { at: 10, type: 'blockPath', label: 'maintenance cart' },
   ]),
@@ -83,14 +83,14 @@ export const SCENARIOS: ScenarioDefinition[] = [
       tasks: [...TASKS8, { cell: { r: 10, c: 2 }, priority: 2, duration: 2 }, { cell: { r: 5, c: 24 }, priority: 3, duration: 2 }],
     },
   ),
-  base('emergency', 'Emergency high-priority task', 'Two critical tasks arrive mid-run. Priority-aware allocation pre-empts lower-priority travel to serve them first.', [
+  base('emergency', 'Emergency high-priority task', 'Two critical tasks arrive mid-run. Robots drop lower-priority travel to serve them first.', [
     { at: 6, type: 'task', cell: { r: 10, c: 24 }, priority: 5, duration: 2, label: 'emergency spill' },
     { at: 12, type: 'task', cell: { r: 6, c: 1 }, priority: 5, duration: 2, label: 'urgent restock' },
   ]),
   base(
     'combined',
     'Combined failure scenario',
-    'The full demonstration: initial allocation, a robot failure with reassignment, an obstacle on a live route with A* replanning, an emergency task, and continued operation to completion.',
+    'The full demonstration: task assignment, a robot breakdown with automatic reassignment, an obstacle on a live route with rerouting, an emergency task, and continued operation to completion.',
     COMBINED_EVENTS,
   ),
 ];

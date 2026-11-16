@@ -23,80 +23,75 @@ export const DEMO_STEPS: DemoStep[] = [
   {
     id: 'load',
     title: 'Warehouse loaded',
-    algorithm: 'Grid → graph',
-    explanation:
-      'The floor is an 18×26 grid. Every free cell is a graph vertex joined to its four neighbours with cost 1. Shelving racks are obstacles.',
+    algorithm: 'Floor map',
+    explanation: 'Four robots wait at their docks. Dark blocks are shelving racks robots must drive around; diamonds are pick tasks, coloured by urgency.',
     reached: () => true,
   },
   {
     id: 'allocate',
-    title: 'Initial task allocation',
-    algorithm: 'Greedy / Hungarian with Cost = αD + βW + γP + δL',
+    title: 'Tasks handed out',
+    algorithm: 'Dispatch',
     explanation:
-      'Each robot gets a BFS distance field. Tasks are scored by distance, workload, priority and estimated finish time, and handed to the cheapest robot.',
+      'Each task gets a score for every robot based on travel distance, how busy the robot already is, how urgent the task is and when it could be finished. The lowest score wins.',
     reached: (s) => s.metrics.allocationRuns > 0 && s.tasks.some((t) => t.assignedRobotId !== null || t.status === 'COMPLETED'),
   },
   {
     id: 'move',
     title: 'Robots plan routes and move',
-    algorithm: 'A* — f(n) = g(n) + h(n), Manhattan heuristic',
+    algorithm: 'Routing',
     explanation:
-      'Each robot runs the selected path planner from its cell to its task. The faint overlay shows nodes the search explored; the dashed line is the final shortest path.',
+      'Every robot works out the shortest drive to its task, searching towards the destination first. The faint shading shows the cells it checked; the dashed line is its route.',
     reached: (s) => s.robots.some((r) => r.distanceTravelled > 0),
   },
   {
     id: 'failure',
-    title: 'Robot R2 fails',
-    algorithm: 'Failure detection → state FAILED',
+    title: 'Robot R2 breaks down',
+    algorithm: 'Breakdown',
     explanation:
-      'R2 stops instantly. Its unfinished tasks are released (completed work is kept) and it is excluded from every future allocation. Its cell becomes an obstacle.',
+      'R2 stops on the spot. Work it had not finished goes back into the pool (finished work is kept) and it gets no new tasks. Other robots now drive around it.',
     reached: (s) => s.metrics.failures > 0,
   },
   {
     id: 'reassign',
-    title: 'Automatic task reassignment',
-    algorithm: 'Allocation re-run over surviving robots',
-    explanation:
-      'Costs are recomputed for the remaining robots only, and the released tasks go to whoever is now cheapest. Each reassignment is counted.',
+    title: 'Work is reassigned automatically',
+    algorithm: 'Reassignment',
+    explanation: 'Scores are recalculated for the robots that still work, and R2’s unfinished tasks go to whoever is now the best fit.',
     reached: (s) => s.metrics.reallocations > 0,
   },
   {
     id: 'obstacle',
-    title: 'Obstacle appears on a live route',
-    algorithm: 'Path validity check',
-    explanation:
-      'A pallet drops onto a cell ahead of a moving robot. The engine scans every remaining route for that cell and invalidates the affected path.',
+    title: 'An aisle gets blocked',
+    algorithm: 'Route check',
+    explanation: 'A pallet drops just ahead of a moving robot. The system checks every planned route and spots the one that now runs into it.',
     reached: (s) => s.metrics.obstaclesAdded > 0,
   },
   {
     id: 'replan',
-    title: 'Dynamic replanning',
-    algorithm: 'A* re-run from current position',
-    explanation:
-      'PATH INVALIDATED → REPLANNING → NEW PATH GENERATED. The robot searches again from where it stands and continues on the new route without passing through the obstacle.',
+    title: 'The robot reroutes',
+    algorithm: 'Rerouting',
+    explanation: 'Route blocked → rerouting → new route found. The robot plans again from where it stands and carries on without touching the obstacle.',
     reached: (s) => s.metrics.replans > 0,
   },
   {
     id: 'emergency',
     title: 'Emergency task arrives',
-    algorithm: 'Priority-aware allocation',
-    explanation:
-      'A critical task (priority 5) gets priority penalty P = 0 and is allocated first. The chosen robot pre-empts lower-priority travel to serve it.',
+    algorithm: 'Urgent work first',
+    explanation: 'A critical job appears. It is assigned first, and the chosen robot pauses lower-priority travel to go there straight away.',
     reached: (s) => s.tasks.some((t) => t.priority === 5),
   },
   {
     id: 'served',
     title: 'Emergency handled',
-    algorithm: 'Execution state machine',
-    explanation: 'The critical task is completed while the rest of the fleet carries on with its queues.',
+    algorithm: 'Task completed',
+    explanation: 'The critical task is finished while the rest of the fleet continues with its own lists.',
     reached: (s) => s.tasks.some((t) => t.priority === 5 && t.status === 'COMPLETED'),
   },
   {
     id: 'complete',
     title: 'Mission complete',
-    algorithm: 'Termination check',
+    algorithm: 'All done',
     explanation:
-      'Every reachable task is completed despite one failure and two route blockages. Check the metrics: failures, reallocations, replans and total distance are all measured, not scripted.',
+      'Every task is finished despite one breakdown and two blocked aisles. The counts for breakdowns, reassignments, reroutes and distance are all measured live, not scripted.',
     reached: (s) => s.finished,
   },
 ];

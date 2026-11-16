@@ -282,14 +282,14 @@ export class SimulationEngine implements EngineContext {
   setPathAlgorithm(alg: PathAlgorithm): void {
     this.state.config.pathAlgorithm = alg;
     this.userConfig.pathAlgorithm = alg;
-    this.log('SIMULATION', 'info', `Path planning algorithm set to ${alg === 'astar' ? 'A*' : 'Dijkstra'}`);
+    this.log('SIMULATION', 'info', `Routing method set to ${alg === 'astar' ? 'targeted routing' : 'exhaustive routing'}`);
     this.emit();
   }
 
   setAllocationAlgorithm(alg: AllocationAlgorithm): void {
     this.state.config.allocationAlgorithm = alg;
     this.userConfig.allocationAlgorithm = alg;
-    this.log('SIMULATION', 'info', `Task allocation algorithm set to ${alg === 'greedy' ? 'Greedy' : 'Hungarian'}`);
+    this.log('SIMULATION', 'info', `Dispatch method set to ${alg === 'greedy' ? 'quick dispatch' : 'optimized dispatch'}`);
     this.emit();
   }
 
@@ -349,7 +349,7 @@ export class SimulationEngine implements EngineContext {
     this.allocationDirty = true;
     return {
       ok: true,
-      message: affected.length ? `Obstacle placed — replanned ${affected.join(', ')}` : `Obstacle placed at ${pointLabel(p)}`,
+      message: affected.length ? `Obstacle placed — rerouted ${affected.join(', ')}` : `Obstacle placed at ${pointLabel(p)}`,
     };
   }
 
@@ -384,7 +384,7 @@ export class SimulationEngine implements EngineContext {
       }
     }
     const msg = robotId ? `${robotId} has no blockable route right now` : 'No moving robot with a long enough route';
-    this.log('OBSTACLE', 'info', `Block-path request skipped — ${msg}`);
+    this.log('OBSTACLE', 'info', `Route block skipped — ${msg}`);
     return { ok: false, message: msg };
   }
 
@@ -408,7 +408,7 @@ export class SimulationEngine implements EngineContext {
     const sev: Severity = task.priority >= 5 ? 'critical' : 'info';
     this.log('TASK', sev, `${task.priority >= 5 ? 'EMERGENCY task' : 'New task'} ${id} at ${pointLabel(p)} — ${PRIORITY_LABEL[task.priority]} priority (${source})`, { taskId: id });
     if (task.priority >= 5) {
-      this.notify({ kind: 'warning', severity: 'warning', title: `Emergency task ${id}`, lines: [`Critical priority at ${pointLabel(p)}`, 'Priority-based allocation will pre-empt lower-priority travel'] });
+      this.notify({ kind: 'warning', severity: 'warning', title: `Emergency task ${id}`, lines: [`Critical priority at ${pointLabel(p)}`, 'The nearest suitable robot will handle it before lower-priority work'] });
     }
     this.allocationDirty = true;
     s.finished = false;

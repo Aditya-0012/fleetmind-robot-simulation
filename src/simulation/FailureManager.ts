@@ -26,7 +26,7 @@ export function failRobot(ctx: EngineContext, robotId: string, source: string): 
   const robot = ctx.robot(robotId);
   if (!robot || robot.state === 'FAILED') return null;
 
-  ctx.log('FAILURE', 'critical', `Robot ${robot.id} failure detected (${source}) while ${robot.state}`, { robotId: robot.id });
+  ctx.log('FAILURE', 'critical', `Robot ${robot.id} broke down (${source})`, { robotId: robot.id });
   transitionRobot(robot, 'FAILED');
   robot.failedAt = state.tick;
   robot.failures++;
@@ -44,7 +44,7 @@ export function failRobot(ctx: EngineContext, robotId: string, source: string): 
   // The broken-down robot now physically blocks its cell.
   const replanned = invalidatePathsThrough(ctx, toKey(robot.position, state.grid.cols), `${robot.id} stalled`);
 
-  if (affected.length > 0) ctx.log('ALLOCATION', 'info', `Task reallocation initiated for ${affected.join(', ')}`, { robotId: robot.id });
+  if (affected.length > 0) ctx.log('ALLOCATION', 'info', `Reassigning unfinished work: ${affected.join(', ')}`, { robotId: robot.id });
   const { assigned } = runAllocation(ctx, `${robot.id} failure`);
   const newAssignments = assigned.filter((a) => affected.includes(a.taskId));
   const unrecovered = affected.filter((id) => !newAssignments.some((a) => a.taskId === id));
@@ -56,11 +56,11 @@ export function failRobot(ctx: EngineContext, robotId: string, source: string): 
     lines: [
       affected.length ? `Affected tasks: ${affected.join(', ')}` : 'No unfinished tasks were affected',
       affected.length
-        ? `Reallocation: ${newAssignments.length}/${affected.length} tasks reassigned`
-        : 'Reallocation: not required',
+        ? `Reassigned: ${newAssignments.length} of ${affected.length} tasks`
+        : 'No reassignment needed',
       ...newAssignments.map((a) => `${a.taskId} → ${a.robotId}`),
       ...(unrecovered.length ? [`Waiting for capacity or route: ${unrecovered.join(', ')}`] : []),
-      replanned.length ? `Replanned around the stalled robot: ${replanned.join(', ')}` : 'No other routes affected',
+      replanned.length ? `Rerouted around the stalled robot: ${replanned.join(', ')}` : 'No other routes affected',
     ],
   });
 
@@ -73,7 +73,7 @@ export function restoreRobot(ctx: EngineContext, robotId: string, source: string
   transitionRobot(robot, 'IDLE');
   robot.failedAt = null;
   ctx.log('RECOVERY', 'success', `Robot ${robot.id} restored to service (${source})`, { robotId: robot.id });
-  ctx.notify({ kind: 'success', severity: 'success', title: `${robot.id} back online`, lines: ['Robot is available for allocation again'] });
+  ctx.notify({ kind: 'success', severity: 'success', title: `${robot.id} back online`, lines: ['Robot can take new tasks again'] });
   ctx.markAllocationDirty();
   return true;
 }

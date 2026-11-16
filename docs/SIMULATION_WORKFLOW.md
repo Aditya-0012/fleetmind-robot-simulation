@@ -42,7 +42,7 @@ Illegal transitions throw `InvalidTransitionError`. Tests drive hundreds of rand
 
 1. Validate the cell (in bounds, not an obstacle, no robot, no active task).
 2. Mark it as an obstacle.
-3. For every robot in `MOVING/WAITING/REPLANNING` whose remaining route uses the cell, log **PATH INVALIDATED** → state `REPLANNING` → **REPLANNING…** → run the selected planner from the current cell. The result is **NEW PATH GENERATED** with the old and new length, or, if no route exists, the task is released and the robot goes `WAITING`.
+3. For every robot in `MOVING/WAITING/REPLANNING` whose remaining route uses the cell, log **Route blocked** → state `REPLANNING` (shown as *Rerouting*) → **Rerouting…** → run the selected planner from the current cell. The result is **New route found** with the old and new length, or, if no route exists, the task is released and the robot goes `WAITING`.
 4. Mark allocation dirty. Tasks that nobody can reach become `BLOCKED` and are retried after the next environment change.
 
 ## Emergency / priority

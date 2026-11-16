@@ -32,12 +32,12 @@ export function assignTask(ctx: EngineContext, robot: Robot, task: Task, cost: n
     task.awaitingReallocation = false;
     task.reassignCount++;
     ctx.state.metrics.reallocations++;
-    ctx.log('ALLOCATION', 'success', `${task.id} reassigned to ${robot.id} (cost ${cost.toFixed(3)})`, {
+    ctx.log('ALLOCATION', 'success', `${task.id} reassigned to ${robot.id} (score ${cost.toFixed(2)})`, {
       robotId: robot.id,
       taskId: task.id,
     });
   } else {
-    ctx.log('ASSIGNMENT', 'info', `${robot.id} assigned ${task.id} (cost ${cost.toFixed(3)})`, {
+    ctx.log('ASSIGNMENT', 'info', `${robot.id} assigned ${task.id} (score ${cost.toFixed(2)})`, {
       robotId: robot.id,
       taskId: task.id,
     });
@@ -69,7 +69,7 @@ function maybePreempt(ctx: EngineContext, robot: Robot, task: Task): void {
   robot.pathIndex = 0;
   ctx.state.metrics.preemptions++;
   if (robot.state === 'MOVING' || robot.state === 'WAITING' || robot.state === 'REPLANNING') transitionRobot(robot, 'ASSIGNED');
-  ctx.log('PRIORITY', 'warning', `${robot.id} pre-empted ${current.id} to serve critical ${task.id}`, {
+  ctx.log('PRIORITY', 'warning', `${robot.id} paused ${current.id} to handle urgent ${task.id} first`, {
     robotId: robot.id,
     taskId: task.id,
   });

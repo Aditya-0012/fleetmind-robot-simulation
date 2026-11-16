@@ -1,6 +1,6 @@
 # DAA viva questions and answers
 
-47 questions (30 core, 17 follow-up). Generated from `src/data/vivaQuestions.ts`, the same source as the in-app DAA Viva page.
+47 questions (30 core, 17 follow-up). Generated from `src/data/vivaQuestions.ts`, Kept for viva preparation; it is not part of the web app.
 
 ## Core questions
 
@@ -102,7 +102,7 @@ Whenever a cell becomes blocked (new obstacle or a robot failing on it) invalida
 ### 20. How does dynamic replanning work?
 *Topic: Dynamics*
 
-The affected robot goes PATH INVALIDATED → REPLANNING, the selected planner runs again from its current position with failed robots as extra obstacles, and it returns to MOVING with the new route (NEW PATH GENERATED). If no route exists the task is released; the allocator then marks it BLOCKED if no robot can reach it and retries when the environment changes.
+The affected robot is reported as "Route blocked" and switches to REPLANNING (shown as "Rerouting"), the selected planner runs again from its current position with failed robots as extra obstacles, and it returns to MOVING with the new route ("New route found"). If no route exists the task is released; the allocator then marks it BLOCKED if no robot can reach it and retries when the environment changes.
 
 ### 21. What is the difference between static and dynamic environments?
 *Topic: Dynamics*

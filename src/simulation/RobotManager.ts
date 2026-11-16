@@ -56,7 +56,7 @@ function advance(ctx: EngineContext, robot: Robot): void {
   if (samePoint(robot.position, task.position)) {
     transitionRobot(robot, 'EXECUTING');
     robot.executionRemaining = task.duration - task.progress;
-    ctx.log('MOVEMENT', 'info', `${robot.id} reached ${task.id}, executing for ${robot.executionRemaining}s`, {
+    ctx.log('MOVEMENT', 'info', `${robot.id} reached ${task.id}, working for ${robot.executionRemaining}s`, {
       robotId: robot.id,
       taskId: task.id,
     });

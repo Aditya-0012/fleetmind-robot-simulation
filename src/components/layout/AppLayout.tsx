@@ -1,8 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  BookOpen,
   ChartColumn,
-  GraduationCap,
   Info,
   LayoutDashboard,
   LogOut,
@@ -22,12 +20,10 @@ import { Logo } from './Logo';
 export const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/simulation', label: 'Live simulation', icon: Radar },
-  { to: '/algorithms', label: 'Algorithms', icon: Network },
+  { to: '/algorithms', label: 'How it works', icon: Network },
   { to: '/performance', label: 'Performance', icon: ChartColumn },
   { to: '/scenarios', label: 'Scenarios', icon: Map },
   { to: '/events', label: 'Event history', icon: ScrollText },
-  { to: '/theory', label: 'DAA theory', icon: BookOpen },
-  { to: '/viva', label: 'DAA viva', icon: GraduationCap },
   { to: '/about', label: 'About project', icon: Info },
 ];
 

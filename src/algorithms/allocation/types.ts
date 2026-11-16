@@ -3,8 +3,8 @@ import type { GridData, Point } from '../../models/Grid';
 export type AllocationAlgorithm = 'greedy' | 'hungarian';
 
 export const ALLOCATION_ALGORITHM_LABEL: Record<AllocationAlgorithm, string> = {
-  greedy: 'Greedy',
-  hungarian: 'Hungarian',
+  greedy: 'Quick dispatch',
+  hungarian: 'Optimized dispatch',
 };
 
 /** α, β, γ, δ in Cost(R,T) = αD + βW + γP + δL */

@@ -44,7 +44,7 @@ export function planRoute(ctx: EngineContext, robot: Robot, reason: 'initial' | 
   }
 
   if (!res.found) {
-    ctx.log('REPLANNING', 'critical', `No route for ${robot.id} to ${task.id} — ${res.error ?? 'unreachable'}`, {
+    ctx.log('REPLANNING', 'critical', `No route for ${robot.id} to ${task.id} — the destination cannot be reached`, {
       robotId: robot.id,
       taskId: task.id,
     });
@@ -62,12 +62,12 @@ export function planRoute(ctx: EngineContext, robot: Robot, reason: 'initial' | 
   state.metrics.plannedPathLength += res.cost;
   const label = PATH_ALGORITHM_LABEL[res.algorithm];
   if (reason === 'replan') {
-    ctx.log('REPLANNING', 'success', `NEW PATH GENERATED for ${robot.id} → ${task.id}: ${res.cost} steps (${label}, ${res.nodesExplored} nodes)`, {
+    ctx.log('REPLANNING', 'success', `New route found for ${robot.id} → ${task.id}: ${res.cost} cells (${label}, ${res.nodesExplored} cells searched)`, {
       robotId: robot.id,
       taskId: task.id,
     });
   } else {
-    ctx.log('MOVEMENT', 'info', `${robot.id} planned ${res.cost}-step route to ${task.id} with ${label} (${res.nodesExplored} nodes)`, {
+    ctx.log('MOVEMENT', 'info', `${robot.id} planned a ${res.cost}-cell route to ${task.id} (${label}, ${res.nodesExplored} cells searched)`, {
       robotId: robot.id,
       taskId: task.id,
     });
@@ -103,14 +103,14 @@ export function invalidatePathsThrough(ctx: EngineContext, cellKey: number, caus
     if (!robot.currentTaskId || !pathUsesCell(robot, cellKey, state.grid.cols)) continue;
     affected.push(robot.id);
     const cell = pointLabel({ r: Math.floor(cellKey / state.grid.cols), c: cellKey % state.grid.cols });
-    ctx.log('REPLANNING', 'warning', `PATH INVALIDATED for ${robot.id} — ${cause} at ${cell}`, {
+    ctx.log('REPLANNING', 'warning', `Route blocked for ${robot.id} — ${cause} at ${cell}`, {
       robotId: robot.id,
       taskId: robot.currentTaskId,
     });
     transitionRobot(robot, 'REPLANNING');
     robot.replans++;
     state.metrics.replans++;
-    ctx.log('REPLANNING', 'info', `REPLANNING… ${robot.id} running ${PATH_ALGORITHM_LABEL[state.config.pathAlgorithm]}`, {
+    ctx.log('REPLANNING', 'info', `Rerouting ${robot.id} (${PATH_ALGORITHM_LABEL[state.config.pathAlgorithm].toLowerCase()})`, {
       robotId: robot.id,
       taskId: robot.currentTaskId,
     });
@@ -120,12 +120,12 @@ export function invalidatePathsThrough(ctx: EngineContext, cellKey: number, caus
     ctx.notify({
       kind: 'replanning',
       severity: outcome === 'no-route' ? 'critical' : 'warning',
-      title: outcome === 'no-route' ? `${robot.id}: no route available` : `${robot.id}: new path generated`,
+      title: outcome === 'no-route' ? `${robot.id}: no route available` : `${robot.id}: new route found`,
       lines: [
-        `Path invalidated — ${cause} at ${cell}`,
+        `Route blocked — ${cause} at ${cell}`,
         outcome === 'no-route'
-          ? `${taskId} released for reallocation`
-          : `Route to ${taskId}: ${before} → ${robot.path.length - 1} steps`,
+          ? `${taskId} handed back for reassignment`
+          : `Route to ${taskId}: ${before} → ${robot.path.length - 1} cells`,
       ],
     });
   }

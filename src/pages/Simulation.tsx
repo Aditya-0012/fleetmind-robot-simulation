@@ -14,7 +14,8 @@ import { isObstacle, pointLabel, samePoint } from '../models/Grid';
 import type { Point } from '../models/Grid';
 import { PRIORITY_LABEL } from '../models/Task';
 import { robotWorkload } from '../models/Robot';
-import { PRIORITY_COLOR, ROBOT_STATE_COLOR, TASK_STATUS_COLOR, titleCase } from '../utils/format';
+import { PRIORITY_COLOR, ROBOT_STATE_COLOR, TASK_STATUS_COLOR } from '../utils/format';
+import { ROBOT_STATE_LABEL, TASK_STATUS_LABEL } from '../utils/labels';
 
 type Tool = 'inspect' | 'obstacle' | 'task' | 'block' | 'fail';
 
@@ -23,7 +24,7 @@ const TOOLS: { id: Tool; label: string; hint: string; icon: ReactNode }[] = [
   { id: 'obstacle', label: 'Obstacle', hint: 'Click a free cell to place an obstacle, click an obstacle to remove it', icon: <Box size={18} /> },
   { id: 'task', label: 'Add task', hint: 'Click a free cell to create a task with the chosen priority', icon: <Plus size={18} /> },
   { id: 'block', label: 'Block route', hint: 'Click a moving robot to drop an obstacle on its route', icon: <Ban size={18} /> },
-  { id: 'fail', label: 'Fail / restore', hint: 'Click a robot to fail it, click a failed robot to restore it', icon: <ShieldAlert size={18} /> },
+  { id: 'fail', label: 'Breakdown', hint: 'Click a robot to break it down, click a broken-down robot to repair it', icon: <ShieldAlert size={18} /> },
 ];
 
 export default function Simulation() {
@@ -85,7 +86,7 @@ export default function Simulation() {
     ? (() => {
         const r = state.robots.find((x) => samePoint(x.position, hover));
         const t = state.tasks.find((x) => samePoint(x.position, hover) && x.status !== 'COMPLETED');
-        return r ? `${r.id} · ${titleCase(r.state)}` : t ? `${t.id} · ${PRIORITY_LABEL[t.priority]}` : isObstacle(state.grid, hover) ? 'Obstacle' : 'Free';
+        return r ? `${r.id} · ${ROBOT_STATE_LABEL[r.state]}` : t ? `${t.id} · ${PRIORITY_LABEL[t.priority]}` : isObstacle(state.grid, hover) ? 'Obstacle' : 'Free';
       })()
     : null;
 
@@ -100,41 +101,41 @@ export default function Simulation() {
           <div className="flex items-center gap-2">
             <span className="text-xs text-ink-400">Routing</span>
             <Segmented
-              ariaLabel="Path planning algorithm"
+              ariaLabel="Routing method"
               size="sm"
               value={state.config.pathAlgorithm}
               onChange={(v) => engine.setPathAlgorithm(v)}
               options={[
-                { value: 'astar', label: 'A*' },
-                { value: 'dijkstra', label: 'Dijkstra' },
+                { value: 'astar', label: 'Targeted', title: 'Searches towards the destination first — fastest' },
+                { value: 'dijkstra', label: 'Exhaustive', title: 'Searches evenly in every direction — slower, same route' },
               ]}
             />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-ink-400">Allocation</span>
+            <span className="text-xs text-ink-400">Dispatch</span>
             <Segmented
-              ariaLabel="Task allocation algorithm"
+              ariaLabel="Dispatch method"
               size="sm"
               value={state.config.allocationAlgorithm}
               onChange={(v) => engine.setAllocationAlgorithm(v)}
               options={[
-                { value: 'greedy', label: 'Greedy' },
-                { value: 'hungarian', label: 'Hungarian' },
+                { value: 'greedy', label: 'Quick', title: 'Hands each task to the best robot one by one' },
+                { value: 'hungarian', label: 'Optimized', title: 'Finds the lowest total score for the whole batch' },
               ]}
             />
           </div>
           <button className="btn-ghost btn-sm" onClick={() => engine.setShowSearch(!state.config.showSearch)} aria-pressed={state.config.showSearch}>
-            {state.config.showSearch ? <Eye size={14} /> : <EyeOff size={14} />} Search overlay
+            {state.config.showSearch ? <Eye size={14} /> : <EyeOff size={14} />} Show search area
           </button>
           <button className="btn-danger btn-sm" onClick={() => { setMultiPick([]); setMultiOpen(!multiOpen); }}>
-            <Users size={14} /> Multiple failures
+            <Users size={14} /> Multiple breakdowns
           </button>
         </div>
       </div>
 
       {multiOpen && (
         <div className="panel flex flex-wrap items-center gap-2 p-3">
-          <span className="mr-2 text-sm text-ink-300">Fail these robots in the same tick:</span>
+          <span className="mr-2 text-sm text-ink-300">Break down these robots at the same moment:</span>
           {state.robots.map((r) => (
             <label key={r.id} className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-sm ${r.state === 'FAILED' ? 'opacity-40' : ''} border-hull-600`}>
               <input
@@ -155,7 +156,7 @@ export default function Simulation() {
               setMultiOpen(false);
             }}
           >
-            Fail {multiPick.length || ''} selected
+            Break down {multiPick.length || ''} selected
           </button>
         </div>
       )}
@@ -214,8 +215,8 @@ export default function Simulation() {
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[11px] text-ink-400">
             <span className="font-mono text-ink-200">{hover ? `${pointLabel(hover)} · ${hoverInfo}` : 'Hover the map for coordinates'}</span>
             <span className="ml-auto flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-[#1F2B4A] ring-1 ring-[#33446E]" /> obstacle</span>
-            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 bg-signal-cyan/30" /> explored</span>
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm bg-signal-violet/60" /> frontier</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 bg-signal-cyan/30" /> cells searched</span>
+            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm bg-signal-violet/60" /> search edge</span>
             <span className="flex items-center gap-1.5"><span className="h-0 w-4 border-t-2 border-dashed border-ink-300" /> route</span>
             <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rotate-45 border border-signal-red" /> critical</span>
           </div>
@@ -228,7 +229,7 @@ export default function Simulation() {
             <Inspector selection={selection} onSelect={setSelection} />
           </Panel>
           {!demoActive && (
-            <Panel title="Cost weights" subtitle="Applied from the next allocation">
+            <Panel title="What matters when assigning" subtitle="Applies to the next assignment">
               <WeightsPanel />
             </Panel>
           )}
@@ -261,7 +262,7 @@ export default function Simulation() {
                       {r.id}
                     </span>
                   </td>
-                  <td className="px-2 py-1.5"><Badge color={ROBOT_STATE_COLOR[r.state]}>{titleCase(r.state)}</Badge></td>
+                  <td className="px-2 py-1.5"><Badge color={ROBOT_STATE_COLOR[r.state]}>{ROBOT_STATE_LABEL[r.state]}</Badge></td>
                   <td className="px-2 py-1.5 text-ink-200">{r.currentTaskId ?? '—'}</td>
                   <td className="px-2 py-1.5 text-ink-300">{robotWorkload(r)}</td>
                   <td className="num px-2 py-1.5 text-right">{r.distanceTravelled}</td>
@@ -293,7 +294,7 @@ export default function Simulation() {
                     className={`cursor-pointer border-t border-hull-800 hover:bg-hull-850 ${selTask === t.id ? 'bg-hull-850' : ''}`}
                   >
                     <td className="px-4 py-1.5 font-display font-semibold">{t.id}</td>
-                    <td className="px-2 py-1.5"><Badge color={TASK_STATUS_COLOR[t.status]}>{titleCase(t.status)}</Badge></td>
+                    <td className="px-2 py-1.5"><Badge color={TASK_STATUS_COLOR[t.status]}>{TASK_STATUS_LABEL[t.status]}</Badge></td>
                     <td className="px-2 py-1.5" style={{ color: PRIORITY_COLOR[t.priority] }}>{PRIORITY_LABEL[t.priority]}</td>
                     <td className="px-2 py-1.5 text-ink-200">{t.assignedRobotId ?? t.completedBy ?? '—'}</td>
                     <td className="px-4 py-1.5 text-right font-mono text-xs text-ink-300">{pointLabel(t.position)}</td>

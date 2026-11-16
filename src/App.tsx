@@ -15,8 +15,6 @@ const Algorithms = lazy(() => import('./pages/Algorithms'));
 const Performance = lazy(() => import('./pages/Performance'));
 const Scenarios = lazy(() => import('./pages/Scenarios'));
 const EventHistory = lazy(() => import('./pages/EventHistory'));
-const Theory = lazy(() => import('./pages/Theory'));
-const Viva = lazy(() => import('./pages/Viva'));
 const About = lazy(() => import('./pages/About'));
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -64,8 +62,6 @@ export default function App() {
         <Route path="performance" element={<Suspense fallback={<PageLoader />}><Performance /></Suspense>} />
         <Route path="scenarios" element={<Suspense fallback={<PageLoader />}><Scenarios /></Suspense>} />
         <Route path="events" element={<Suspense fallback={<PageLoader />}><EventHistory /></Suspense>} />
-        <Route path="theory" element={<Suspense fallback={<PageLoader />}><Theory /></Suspense>} />
-        <Route path="viva" element={<Suspense fallback={<PageLoader />}><Viva /></Suspense>} />
         <Route path="about" element={<Suspense fallback={<PageLoader />}><About /></Suspense>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

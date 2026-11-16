@@ -4,7 +4,8 @@ import { Badge, ConfirmDialog, EmptyState, Panel } from '../components/common/ui
 import { useSim } from '../context/SimulationContext';
 import { EVENT_TYPES, formatTick } from '../models/Event';
 import type { EventType, Severity } from '../models/Event';
-import { SEVERITY_COLOR, downloadFile, titleCase, toCSV } from '../utils/format';
+import { SEVERITY_COLOR, downloadFile, toCSV } from '../utils/format';
+import { EVENT_TYPE_LABEL, SEVERITY_LABEL } from '../utils/labels';
 
 const SEVERITIES: Severity[] = ['info', 'success', 'warning', 'critical'];
 
@@ -103,7 +104,7 @@ export default function EventHistory() {
               aria-pressed={types.has(t)}
               className={`rounded-md border px-2 py-1 text-xs transition-colors ${types.has(t) ? 'border-signal-cyan bg-signal-cyan/15 text-signal-cyan' : 'border-hull-600 text-ink-300 hover:text-ink-100'}`}
             >
-              {titleCase(t)} <span className="text-ink-400">{counts[t] ?? 0}</span>
+              {EVENT_TYPE_LABEL[t]} <span className="text-ink-400">{counts[t] ?? 0}</span>
             </button>
           ))}
           <span className="mx-1 w-px bg-hull-700" />
@@ -115,7 +116,7 @@ export default function EventHistory() {
               className="rounded-md border px-2 py-1 text-xs"
               style={sev.has(s) ? { borderColor: SEVERITY_COLOR[s], color: SEVERITY_COLOR[s], backgroundColor: `${SEVERITY_COLOR[s]}1F` } : { borderColor: '#26355C', color: '#94A2C2' }}
             >
-              {titleCase(s)}
+              {SEVERITY_LABEL[s]}
             </button>
           ))}
           {(types.size > 0 || sev.size > 0 || robot || task || q) && (
@@ -156,9 +157,9 @@ export default function EventHistory() {
               {filtered.slice(0, 600).map((e) => (
                 <tr key={e.id} className="border-t border-hull-800 align-top">
                   <td className="px-4 py-1.5 font-mono text-xs text-ink-400">{formatTick(e.tick)}</td>
-                  <td className="px-2 py-1.5 text-xs text-ink-300">{titleCase(e.type)}</td>
+                  <td className="px-2 py-1.5 text-xs text-ink-300">{EVENT_TYPE_LABEL[e.type]}</td>
                   <td className="px-2 py-1.5">
-                    <Badge color={SEVERITY_COLOR[e.severity]}>{titleCase(e.severity)}</Badge>
+                    <Badge color={SEVERITY_COLOR[e.severity]}>{SEVERITY_LABEL[e.severity]}</Badge>
                   </td>
                   <td className="px-2 py-1.5 text-ink-200">{e.robotId ?? ''}</td>
                   <td className="px-2 py-1.5 text-ink-200">{e.taskId ?? ''}</td>

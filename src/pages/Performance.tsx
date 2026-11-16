@@ -41,7 +41,7 @@ export default function Performance() {
         const sc = generateScenario({ size, robots: 2, tasks: 5, density: 0.3, seed }).scenario;
         const g = createGrid(size, size);
         sc.obstacles.forEach((o) => setObstacle(g, o, true));
-        setPath(benchmarkPathfinding(g, `Random ${size}×${size}, 30% obstacles, seed ${seed}`, 40, seed));
+        setPath(benchmarkPathfinding(g, `Random ${size}×${size} map, 30% obstacles, seed ${seed}`, 40, seed));
       }
     });
 
@@ -54,7 +54,7 @@ export default function Performance() {
       JSON.stringify(
         {
           exportedAt: new Date().toISOString(),
-          note: 'Times measured with performance.now() in the browser; they vary with hardware and runtime. Node counts and costs are machine-independent.',
+          note: 'Times are measured in the browser and depend on the computer. Cells searched and dispatch scores are the same on any computer.',
           liveSession: { scenario: state.scenarioName, tick: state.tick, config: state.config, metrics: live, history: state.history },
           pathfinding: path,
           allocation: alloc === 'empty' ? null : alloc,
@@ -78,12 +78,12 @@ export default function Performance() {
             pair: p.pair,
             start: pointLabel(p.start),
             goal: pointLabel(p.goal),
-            astar_path: p.astar.cost,
-            astar_explored: p.astar.nodesExplored,
-            astar_ms: p.astar.timeMs.toFixed(4),
-            dijkstra_path: p.dijkstra.cost,
-            dijkstra_explored: p.dijkstra.nodesExplored,
-            dijkstra_ms: p.dijkstra.timeMs.toFixed(4),
+            targeted_route_length: p.astar.cost,
+            targeted_cells_searched: p.astar.nodesExplored,
+            targeted_ms: p.astar.timeMs.toFixed(4),
+            exhaustive_route_length: p.dijkstra.cost,
+            exhaustive_cells_searched: p.dijkstra.nodesExplored,
+            exhaustive_ms: p.dijkstra.timeMs.toFixed(4),
           })),
         ),
       );
@@ -103,8 +103,7 @@ export default function Performance() {
         <div>
           <h1 className="text-[28px] font-bold leading-tight">Performance analytics</h1>
           <p className="mt-1 max-w-3xl text-sm text-ink-300">
-            Every number here is measured by running the real algorithms. Node counts, costs and operation counts are machine-independent; millisecond timings come from{' '}
-            <code className="font-mono text-signal-cyan">performance.now()</code> and vary with your hardware, browser and background load.
+            Every number here comes from actually running the system. Counts such as cells searched and dispatch scores are the same on any computer; times in milliseconds depend on your machine.
           </p>
         </div>
         <div className="flex gap-2">
@@ -121,9 +120,9 @@ export default function Performance() {
       <Panel title="This session" subtitle={`${state.scenarioName} · t = ${state.tick}s`}>
         <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg bg-hull-800 sm:grid-cols-4 lg:grid-cols-6">
           {[
-            ['Failures', fmtNum(live.perf.failures)],
-            ['Reallocations', fmtNum(live.perf.reallocations)],
-            ['Replans', fmtNum(live.perf.replans)],
+            ['Breakdowns', fmtNum(live.perf.failures)],
+            ['Reassignments', fmtNum(live.perf.reallocations)],
+            ['Reroutes', fmtNum(live.perf.replans)],
             ['Distance', `${fmtNum(live.perf.totalDistance)} cells`],
             ['Tasks completed', `${live.tasks.completed}/${live.tasks.total}`],
             ['Completion time', state.finished ? `${state.tick}s` : 'running'],
@@ -145,7 +144,7 @@ export default function Performance() {
                 <Tooltip {...TOOLTIP} labelFormatter={(l) => `t = ${l}s`} />
                 <Legend {...LEGEND} />
                 <Line yAxisId="l" type="monotone" dataKey="distance" name="Distance travelled" stroke={SERIES.cyan} strokeWidth={2} dot={false} isAnimationActive={false} />
-                <Line yAxisId="r" type="monotone" dataKey="nodesExplored" name="Nodes explored (cumulative)" stroke={SERIES.violet} strokeWidth={2} dot={false} isAnimationActive={false} />
+                <Line yAxisId="r" type="monotone" dataKey="nodesExplored" name="Cells searched (total)" stroke={SERIES.violet} strokeWidth={2} dot={false} isAnimationActive={false} />
                 <Line yAxisId="l" type="stepAfter" dataKey="completed" name="Tasks completed" stroke={SERIES.green} strokeWidth={2} dot={false} isAnimationActive={false} />
               </LineChart>
             </ResponsiveContainer>
@@ -159,8 +158,8 @@ export default function Performance() {
 
       {/* ── pathfinding ── */}
       <Panel
-        title="A* vs Dijkstra"
-        subtitle="40 start/goal pairs, chosen from one connected region, solved by both algorithms on the identical grid"
+        title="Targeted vs exhaustive routing"
+        subtitle="40 random trips on the same map, each planned with both routing methods"
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Segmented
@@ -185,28 +184,27 @@ export default function Performance() {
         }
       >
         {!path ? (
-          <EmptyState icon={<Gauge size={22} />} title="No pathfinding benchmark yet">
-            Run the benchmark to compare path length, nodes explored, heap operations and time.
+          <EmptyState icon={<Gauge size={22} />} title="No routing comparison yet">
+            Run it to compare route length, cells searched and time for both methods.
           </EmptyState>
         ) : (
           <div className="space-y-5">
             <p className="text-sm text-ink-300">
-              {path.gridLabel} · {path.pairs.length} pairs ·{' '}
+              {path.gridLabel} · {path.pairs.length} trips ·{' '}
               {path.pathsEqual ? (
-                <span className="text-signal-green">every pair produced equal-length shortest paths</span>
+                <span className="text-signal-green">both methods found equally short routes on every trip</span>
               ) : (
-                <span className="text-signal-red">path lengths differ — investigate</span>
+                <span className="text-signal-red">route lengths differ — investigate</span>
               )}
             </p>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[640px] text-sm">
                 <thead className="text-left text-xs text-ink-400">
                   <tr>
-                    <th className="py-2 pr-3 font-medium">Algorithm</th>
-                    <th className="px-3 py-2 text-right font-medium">Avg. path</th>
-                    <th className="px-3 py-2 text-right font-medium">Avg. nodes explored</th>
-                    <th className="px-3 py-2 text-right font-medium">Avg. heap pushes</th>
-                    <th className="px-3 py-2 text-right font-medium" title="Peak open-set size — a proxy for memory use">Avg. peak open set</th>
+                    <th className="py-2 pr-3 font-medium">Method</th>
+                    <th className="px-3 py-2 text-right font-medium">Avg. route length</th>
+                    <th className="px-3 py-2 text-right font-medium">Avg. cells searched</th>
+                    <th className="px-3 py-2 text-right font-medium" title="Most cells held in the to-check list at once — a sign of memory use">Avg. peak to-check list</th>
                     <th className="px-3 py-2 text-right font-medium">Avg. time</th>
                     <th className="py-2 pl-3 text-right font-medium">Total time</th>
                   </tr>
@@ -214,10 +212,9 @@ export default function Performance() {
                 <tbody className="num">
                   {path.summary.map((s) => (
                     <tr key={s.algorithm} className="border-t border-hull-800">
-                      <td className="py-2 pr-3 font-sans font-medium">{s.algorithm}</td>
+                      <td className="py-2 pr-3 font-sans font-medium">{s.algorithm === 'A*' ? 'Targeted' : 'Exhaustive'}</td>
                       <td className="px-3 py-2 text-right">{fmtNum(s.avgPath, 2)}</td>
                       <td className="px-3 py-2 text-right">{fmtNum(s.avgExplored, 1)}</td>
-                      <td className="px-3 py-2 text-right">{fmtNum(s.avgPushes, 1)}</td>
                       <td className="px-3 py-2 text-right">{fmtNum(s.avgMaxOpen, 1)}</td>
                       <td className="px-3 py-2 text-right">{fmtMs(s.avgTimeMs)}</td>
                       <td className="py-2 pl-3 text-right">{fmtMs(s.totalTimeMs)}</td>
@@ -227,41 +224,41 @@ export default function Performance() {
               </table>
             </div>
             <p className="text-sm text-ink-300">
-              A* expanded{' '}
+              Targeted routing searched{' '}
               <span className="font-semibold text-signal-cyan">
-                {fmtNum((1 - path.summary[0].avgExplored / Math.max(1, path.summary[1].avgExplored)) * 100, 1)}% fewer nodes
+                {fmtNum((1 - path.summary[0].avgExplored / Math.max(1, path.summary[1].avgExplored)) * 100, 1)}% fewer cells
               </span>{' '}
-              than Dijkstra on average for the same optimal path lengths.
+              than exhaustive routing on average, for routes of exactly the same length.
             </p>
             <div className="grid gap-5 lg:grid-cols-2">
               <div className="h-64">
-                <p className="mb-1 text-xs text-ink-400">Nodes explored per pair</p>
+                <p className="mb-1 text-xs text-ink-400">Cells searched per trip</p>
                 <ResponsiveContainer>
-                  <BarChart data={path.pairs.map((p) => ({ pair: p.pair, 'A*': p.astar.nodesExplored, Dijkstra: p.dijkstra.nodesExplored }))} margin={{ left: -10, right: 4 }}>
+                  <BarChart data={path.pairs.map((p) => ({ pair: p.pair, Targeted: p.astar.nodesExplored, Exhaustive: p.dijkstra.nodesExplored }))} margin={{ left: -10, right: 4 }}>
                     <CartesianGrid {...GRID} />
                     <XAxis dataKey="pair" {...AXIS} />
                     <YAxis {...AXIS} />
-                    <Tooltip {...TOOLTIP} labelFormatter={(l) => `Pair ${l}`} />
+                    <Tooltip {...TOOLTIP} labelFormatter={(l) => `Trip ${l}`} />
                     <Legend {...LEGEND} />
-                    <Bar dataKey="A*" fill={SERIES.cyan} radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="Dijkstra" fill={SERIES.violet} radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="Targeted" fill={SERIES.cyan} radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="Exhaustive" fill={SERIES.violet} radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
               <div className="h-64">
-                <p className="mb-1 text-xs text-ink-400">Nodes explored vs path length</p>
+                <p className="mb-1 text-xs text-ink-400">Cells searched vs route length</p>
                 <ResponsiveContainer>
                   <LineChart
-                    data={[...path.pairs].sort((a, b) => a.astar.cost - b.astar.cost).map((p) => ({ len: p.astar.cost, 'A*': p.astar.nodesExplored, Dijkstra: p.dijkstra.nodesExplored }))}
+                    data={[...path.pairs].sort((a, b) => a.astar.cost - b.astar.cost).map((p) => ({ len: p.astar.cost, Targeted: p.astar.nodesExplored, Exhaustive: p.dijkstra.nodesExplored }))}
                     margin={{ left: -10, right: 4 }}
                   >
                     <CartesianGrid {...GRID} />
                     <XAxis dataKey="len" {...AXIS} />
                     <YAxis {...AXIS} />
-                    <Tooltip {...TOOLTIP} labelFormatter={(l) => `Path length ${l}`} />
+                    <Tooltip {...TOOLTIP} labelFormatter={(l) => `Route length ${l}`} />
                     <Legend {...LEGEND} />
-                    <Line dataKey="A*" stroke={SERIES.cyan} strokeWidth={2} dot={{ r: 2 }} isAnimationActive={false} />
-                    <Line dataKey="Dijkstra" stroke={SERIES.violet} strokeWidth={2} dot={{ r: 2 }} isAnimationActive={false} />
+                    <Line dataKey="Targeted" stroke={SERIES.cyan} strokeWidth={2} dot={{ r: 2 }} isAnimationActive={false} />
+                    <Line dataKey="Exhaustive" stroke={SERIES.violet} strokeWidth={2} dot={{ r: 2 }} isAnimationActive={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -272,8 +269,8 @@ export default function Performance() {
 
       {/* ── allocation ── */}
       <Panel
-        title="Greedy vs Hungarian"
-        subtitle="One cost matrix built from the current fleet: every operational robot at its present cell, every unfinished task"
+        title="Quick vs optimized dispatch"
+        subtitle="One score table built from the current fleet: every working robot where it stands, every unfinished task"
         actions={
           <button className="btn-primary btn-sm" onClick={runAlloc} disabled={busy !== null}>
             <Play size={14} /> {busy === 'alloc' ? 'Running…' : 'Compare on current state'}
@@ -281,38 +278,38 @@ export default function Performance() {
         }
       >
         {alloc === null && (
-          <EmptyState icon={<Gauge size={22} />} title="No allocation comparison yet">
-            Uses whatever the simulation holds right now — load a random scenario with many tasks for a bigger matrix.
+          <EmptyState icon={<Gauge size={22} />} title="No dispatch comparison yet">
+            Uses whatever the simulation holds right now — load a random scenario with many tasks for a bigger comparison.
           </EmptyState>
         )}
         {alloc === 'empty' && (
-          <EmptyState icon={<Gauge size={22} />} title="Nothing to allocate">
-            Every task is completed or every robot has failed. Reset the scenario or add tasks, then compare again.
+          <EmptyState icon={<Gauge size={22} />} title="Nothing to assign">
+            Every task is completed or every robot has broken down. Reset the scenario or add tasks, then compare again.
           </EmptyState>
         )}
         {allocData && (
           <div className="space-y-5">
             <div className="grid gap-5 lg:grid-cols-2">
               <div>
-                <h3 className="text-sm font-semibold">One-to-one batch (same matrix)</h3>
+                <h3 className="text-sm font-semibold">One task per robot (same score table)</h3>
                 <p className="mt-0.5 text-xs text-ink-400">
-                  {allocData.robots.length} robots × {allocData.tasks.length} tasks · at most {Math.min(allocData.robots.length, allocData.tasks.length)} pairs
+                  {allocData.robots.length} robots × {allocData.tasks.length} tasks · at most {Math.min(allocData.robots.length, allocData.tasks.length)} assignments
                 </p>
                 <table className="mt-3 w-full text-sm">
                   <thead className="text-left text-xs text-ink-400">
                     <tr>
                       <th className="py-1.5 font-medium" />
-                      <th className="py-1.5 text-right font-medium">Total cost</th>
+                      <th className="py-1.5 text-right font-medium">Total score</th>
                       <th className="py-1.5 text-right font-medium">Assigned</th>
-                      <th className="py-1.5 text-right font-medium">Operations</th>
+                      <th className="py-1.5 text-right font-medium">Steps</th>
                       <th className="py-1.5 text-right font-medium">Time</th>
                     </tr>
                   </thead>
                   <tbody className="num">
                     {(['greedy', 'hungarian'] as const).map((k) => (
                       <tr key={k} className="border-t border-hull-800">
-                        <td className="py-1.5 font-sans font-medium">{k === 'greedy' ? 'Greedy' : 'Hungarian'}</td>
-                        <td className="py-1.5 text-right">{allocData.oneToOne[k].totalCost.toFixed(4)}</td>
+                        <td className="py-1.5 font-sans font-medium">{k === 'greedy' ? 'Quick' : 'Optimized'}</td>
+                        <td className="py-1.5 text-right">{allocData.oneToOne[k].totalCost.toFixed(2)}</td>
                         <td className="py-1.5 text-right">{allocData.oneToOne[k].assigned}</td>
                         <td className="py-1.5 text-right">{fmtNum(allocData.oneToOne[k].operations)}</td>
                         <td className="py-1.5 text-right">{fmtMs(allocData.oneToOne[k].timeMs)}</td>
@@ -322,8 +319,8 @@ export default function Performance() {
                 </table>
                 <p className="mt-2 text-xs text-ink-400">
                   {allocData.oneToOne.greedy.totalCost - allocData.oneToOne.hungarian.totalCost > 1e-9
-                    ? `Hungarian saves ${(allocData.oneToOne.greedy.totalCost - allocData.oneToOne.hungarian.totalCost).toFixed(4)} cost units (${fmtNum(((allocData.oneToOne.greedy.totalCost - allocData.oneToOne.hungarian.totalCost) / allocData.oneToOne.greedy.totalCost) * 100, 1)}%).`
-                    : 'Greedy happened to find the optimum on this matrix.'}
+                    ? `Optimized dispatch scores ${(allocData.oneToOne.greedy.totalCost - allocData.oneToOne.hungarian.totalCost).toFixed(2)} lower (${fmtNum(((allocData.oneToOne.greedy.totalCost - allocData.oneToOne.hungarian.totalCost) / allocData.oneToOne.greedy.totalCost) * 100, 1)}%).`
+                    : 'Quick dispatch happened to find the best answer here.'}
                 </p>
                 <div className="mt-3 overflow-x-auto">
                   <table className="text-xs">
@@ -349,7 +346,7 @@ export default function Performance() {
                                 <span
                                   className={`block rounded px-1.5 py-1 text-center ${h ? 'bg-signal-green/20 text-signal-green ring-1 ring-signal-green' : ''} ${g && !h ? 'text-signal-amber ring-1 ring-signal-amber' : ''} ${g && h ? 'outline outline-1 outline-signal-amber' : ''} ${!g && !h ? 'text-ink-400' : ''}`}
                                 >
-                                  {Number.isFinite(c) ? c.toFixed(2) : '∞'}
+                                  {Number.isFinite(c) ? c.toFixed(2) : '—'}
                                 </span>
                               </td>
                             );
@@ -358,22 +355,22 @@ export default function Performance() {
                       ))}
                     </tbody>
                   </table>
-                  <p className="mt-1.5 text-[11px] text-ink-400">Green = Hungarian pair · amber outline = Greedy pair · ∞ = unreachable</p>
+                  <p className="mt-1.5 text-[11px] text-ink-400">Green = optimized choice · amber outline = quick choice · — = cannot reach</p>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-sm font-semibold">Full multi-task allocation (capacity {state.config.capacity})</h3>
-                <p className="mt-0.5 text-xs text-ink-400">Greedy: sequential with workload updates · Hungarian: repeated optimal batches</p>
+                <h3 className="text-sm font-semibold">Several tasks per robot (up to {state.config.capacity} each)</h3>
+                <p className="mt-0.5 text-xs text-ink-400">Quick: one task at a time · Optimized: best total in repeated rounds</p>
                 <table className="mt-3 w-full text-sm">
                   <thead className="text-left text-xs text-ink-400">
                     <tr>
                       <th className="py-1.5 font-medium" />
-                      <th className="py-1.5 text-right font-medium">Total cost</th>
+                      <th className="py-1.5 text-right font-medium">Total score</th>
                       <th className="py-1.5 text-right font-medium">Assigned</th>
-                      <th className="py-1.5 text-right font-medium">Unassigned</th>
+                      <th className="py-1.5 text-right font-medium">Left over</th>
                       <th className="py-1.5 text-right font-medium">Rounds</th>
-                      <th className="py-1.5 text-right font-medium">Cost evals</th>
+                      <th className="py-1.5 text-right font-medium">Scores worked out</th>
                       <th className="py-1.5 text-right font-medium">Time</th>
                     </tr>
                   </thead>
@@ -382,8 +379,8 @@ export default function Performance() {
                       const r = allocData.multi[k];
                       return (
                         <tr key={k} className="border-t border-hull-800">
-                          <td className="py-1.5 font-sans font-medium">{k === 'greedy' ? 'Greedy' : 'Hungarian'}</td>
-                          <td className="py-1.5 text-right">{r.totalCost.toFixed(4)}</td>
+                          <td className="py-1.5 font-sans font-medium">{k === 'greedy' ? 'Quick' : 'Optimized'}</td>
+                          <td className="py-1.5 text-right">{r.totalCost.toFixed(2)}</td>
                           <td className="py-1.5 text-right">{r.assignments.length}</td>
                           <td className="py-1.5 text-right">{r.unassigned.length}</td>
                           <td className="py-1.5 text-right">{r.rounds}</td>
@@ -395,7 +392,7 @@ export default function Performance() {
                   </tbody>
                 </table>
                 <div className="mt-4 h-56">
-                  <p className="mb-1 text-xs text-ink-400">Workload distribution (tasks per robot)</p>
+                  <p className="mb-1 text-xs text-ink-400">Tasks per robot</p>
                   <ResponsiveContainer>
                     <BarChart data={allocData.workload.map((w) => ({ ...w }))} margin={{ left: -18, right: 4 }}>
                       <CartesianGrid {...GRID} />
@@ -403,15 +400,15 @@ export default function Performance() {
                       <YAxis allowDecimals={false} {...AXIS} />
                       <Tooltip {...TOOLTIP} />
                       <Legend {...LEGEND} />
-                      <Bar dataKey="greedy" name="Greedy" fill={SERIES.amber} radius={[2, 2, 0, 0]} />
-                      <Bar dataKey="hungarian" name="Hungarian" fill={SERIES.green} radius={[2, 2, 0, 0]} />
+                      <Bar dataKey="greedy" name="Quick" fill={SERIES.amber} radius={[2, 2, 0, 0]} />
+                      <Bar dataKey="hungarian" name="Optimized" fill={SERIES.green} radius={[2, 2, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               </div>
             </div>
             <p className="text-xs text-ink-400">
-              In the multi-task setting neither method is guaranteed globally optimal (assigning several ordered tasks per robot is a routing problem). Hungarian is optimal only for each one-to-one batch.
+              When robots take several tasks each, neither method can promise the best possible overall plan — the order of visits matters too. Optimized dispatch is guaranteed best within each round.
             </p>
           </div>
         )}
@@ -420,7 +417,7 @@ export default function Performance() {
       {/* ── scenario runs ── */}
       <Panel
         title="Dynamic scenarios"
-        subtitle="Each predefined scenario run headless to completion under three configurations, with your current weights and capacity"
+        subtitle="Every built-in scenario run start to finish with three method combinations, using your current settings"
         actions={
           <button className="btn-primary btn-sm" onClick={runScenarios} disabled={busy !== null}>
             <Play size={14} /> {busy === 'scen' ? 'Running…' : 'Run all scenarios'}
@@ -429,13 +426,13 @@ export default function Performance() {
       >
         {!runs ? (
           <EmptyState icon={<Gauge size={22} />} title="No scenario runs yet">
-            18 complete simulations — takes a moment.
+            18 complete runs — takes a moment.
           </EmptyState>
         ) : (
           <div className="space-y-5">
             <div className="grid gap-5 lg:grid-cols-2">
               <div className="h-64">
-                <p className="mb-1 text-xs text-ink-400">Completion time (simulated seconds)</p>
+                <p className="mb-1 text-xs text-ink-400">Time to finish all tasks (seconds)</p>
                 <ResponsiveContainer>
                   <BarChart data={pivot(runs, 'completionTick')} margin={{ left: -14, right: 4 }}>
                     <CartesianGrid {...GRID} />
@@ -443,14 +440,14 @@ export default function Performance() {
                     <YAxis {...AXIS} />
                     <Tooltip {...TOOLTIP} />
                     <Legend {...LEGEND} />
-                    <Bar dataKey="A* + Greedy" fill={SERIES.cyan} radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="A* + Hungarian" fill={SERIES.green} radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="Dijkstra + Greedy" fill={SERIES.violet} radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="Targeted + Quick" fill={SERIES.cyan} radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="Targeted + Optimized" fill={SERIES.green} radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="Exhaustive + Quick" fill={SERIES.violet} radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
               <div className="h-64">
-                <p className="mb-1 text-xs text-ink-400">Nodes explored by the path planner</p>
+                <p className="mb-1 text-xs text-ink-400">Cells searched for routing</p>
                 <ResponsiveContainer>
                   <BarChart data={pivot(runs, 'nodesExplored')} margin={{ left: -4, right: 4 }}>
                     <CartesianGrid {...GRID} />
@@ -458,9 +455,9 @@ export default function Performance() {
                     <YAxis {...AXIS} />
                     <Tooltip {...TOOLTIP} />
                     <Legend {...LEGEND} />
-                    <Bar dataKey="A* + Greedy" fill={SERIES.cyan} radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="A* + Hungarian" fill={SERIES.green} radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="Dijkstra + Greedy" fill={SERIES.violet} radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="Targeted + Quick" fill={SERIES.cyan} radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="Targeted + Optimized" fill={SERIES.green} radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="Exhaustive + Quick" fill={SERIES.violet} radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -469,7 +466,7 @@ export default function Performance() {
               <table className="w-full min-w-[820px] text-sm">
                 <thead className="text-left text-xs text-ink-400">
                   <tr>
-                    {['Scenario', 'Configuration', 'Failures', 'Reallocations', 'Replans', 'Distance', 'Completed', 'Finish (s)', 'Nodes explored', 'Algorithm time'].map((h, i) => (
+                    {['Scenario', 'Methods', 'Breakdowns', 'Reassignments', 'Reroutes', 'Distance', 'Completed', 'Finish (s)', 'Cells searched', 'Decision time'].map((h, i) => (
                       <th key={h} className={`py-2 font-medium ${i > 1 ? 'text-right' : ''} px-2`}>
                         {h}
                       </th>

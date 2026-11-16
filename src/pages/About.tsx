@@ -9,19 +9,18 @@ const LAYERS = [
   { name: 'Data', detail: 'The floor map, robots, tasks and the event log', color: '#FFC247' },
 ];
 
-// Team details are filled in from the project report.
 const TEAM: { name: string; roll: string; role: string }[] = [
-  { name: '[Team member 1]', roll: '[Roll no.]', role: '[Contribution]' },
-  { name: '[Team member 2]', roll: '[Roll no.]', role: '[Contribution]' },
-  { name: '[Team member 3]', roll: '[Roll no.]', role: '[Contribution]' },
-  { name: '[Team member 4]', roll: '[Roll no.]', role: '[Contribution]' },
+  { name: 'Aditya Raj Tripathi', roll: '23', role: 'Simulation engine, breakdown recovery and rerouting; project lead' },
+  { name: 'Aarhan Goswami', roll: '03', role: 'Route planning: targeted and exhaustive routing, route explorer' },
+  { name: 'Anay Abhyankar', roll: '11', role: 'Task dispatch: scoring, quick and optimized dispatch, performance analysis' },
+  { name: 'Anvay Bahadur', roll: '51', role: 'Dashboard, scenarios and demo mode' },
 ];
 
 const COURSE = {
   course: 'Design and Analysis of Algorithms',
-  guide: '[Faculty name]',
-  institution: '[College name]',
-  semester: '[Semester / year]',
+  guide: 'Prof. Vikas Maral',
+  institution: 'Vishwakarma Institute of Technology',
+  semester: 'Semester 5 · Third year',
 };
 
 export default function About() {
@@ -56,7 +55,7 @@ export default function About() {
             <thead className="text-left text-xs text-ink-400">
               <tr>
                 <th className="py-1.5 font-medium">Name</th>
-                <th className="py-1.5 font-medium">Roll no.</th>
+                <th className="whitespace-nowrap px-3 py-1.5 font-medium">Roll no.</th>
                 <th className="py-1.5 font-medium">Contribution</th>
               </tr>
             </thead>
@@ -64,7 +63,7 @@ export default function About() {
               {TEAM.map((m) => (
                 <tr key={m.name} className="border-t border-hull-800 text-ink-200">
                   <td className="py-2">{m.name}</td>
-                  <td className="py-2">{m.roll}</td>
+                  <td className="px-3 py-2">{m.roll}</td>
                   <td className="py-2">{m.role}</td>
                 </tr>
               ))}

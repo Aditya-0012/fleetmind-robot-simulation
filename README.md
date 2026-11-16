@@ -243,9 +243,9 @@ Conflict-Based Search for collision-free paths, D* Lite for incremental replanni
 
 | Name | Roll no. | Contribution |
 |---|---|---|
-| [Team member 1] | [ ] | [ ] |
-| [Team member 2] | [ ] | [ ] |
-| [Team member 3] | [ ] | [ ] |
-| [Team member 4] | [ ] | [ ] |
+| Aditya Raj Tripathi | 23 | Simulation engine (tick loop, state machines), failure recovery and dynamic replanning; project lead |
+| Aarhan Goswami | 03 | Route planning: A*, Dijkstra, BFS distance fields, min-heap priority queue, route explorer |
+| Anay Abhyankar | 11 | Task allocation: cost function, Greedy and Hungarian algorithms, performance benchmarks |
+| Anvay Bahadur | 51 | Dashboard, predefined scenarios, random scenario generator and demo mode |
 
-**Guide:** [Faculty name] · **Institution:** [College] · **Semester:** [ ]
+**Guide:** Prof. Vikas Maral · **Institution:** Vishwakarma Institute of Technology · **Course:** Design and Analysis of Algorithms · **Semester:** 5 (Third year)
